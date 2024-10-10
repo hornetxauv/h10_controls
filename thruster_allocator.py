@@ -40,13 +40,13 @@ thruster_biases = np.array([1.0,    # Front Left
 
 thrust_map = pd.read_csv("./thrust_map.csv", sep=',', header=None).values
 
-'''
-ThrustAllocator solves the matrix Ax = b, where
-A (parameters) is a 6 x 7 matrix of unit xyz force, rpy torque,
-b (output) is the expected xyz force, rpy torque
-x is the force for each thrusters
-'''
 class ThrustAllocator:
+    '''
+    ThrustAllocator solves the matrix Ax = b, where
+    A (parameters) is a 6 x 7 matrix of unit xyz force, unit torque vector (in rpy),
+    b (output) is the expected xyz force, torque vector
+    x is the force for each thrusters
+    '''
     def __init__(
         self,
         thruster_positions=thruster_positions,

@@ -56,10 +56,13 @@ class ThrustAllocator:
         self.thruster_positions = thruster_positions
         self.thruster_directions = thruster_directions
         self.thrust_map = thrust_map
-    
-        self.unit_torque = np.cross(self.thruster_positions, self.thruster_directions)
-        self.parameters = np.concatenate(
-            (self.thruster_directions.T, self.unit_torque.T)
+        self.parameters = self.initCoefficientMatrix()
+
+    # Create coefficient matrix
+    def initCoefficientMatrix(self):
+        unit_torque = np.cross(self.thruster_positions, self.thruster_directions)
+        return np.concatenate(
+            (self.thruster_directions.T, unit_torque.T)
         )
 
     def getThrusts(self, target_xyz_force, target_torque):
@@ -69,7 +72,6 @@ class ThrustAllocator:
         thrust_bound = (min_thrust, max_thrust)
 
         return optimize.lsq_linear(self.parameters, output, thrust_bound).x
-
     
     def getOutputMatrix(self, target_xyz_force, target_torque):
         target_xyz_force = np.array(target_xyz_force)
@@ -77,11 +79,25 @@ class ThrustAllocator:
          
         return np.append(target_xyz_force, target_torque)
 
+    
+    def thrustToPwm(self, thrust_forces):
+        pwm = []
+        for force in thrust_forces:
+            idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
+            pwm.append(self.thrust_map[idx][1].astype(int))
+        
+        return pwm
+    
+    def getThrustPwm(self, target_xyz_force, target_torque):
+        thrust_forces = self.getThrusts(target_xyz_force, target_torque)
+        pwm = self.thrustToPwm(thrust_forces)
+
+        return pwm
+    
     # Pure translation
-    def getTranslationThrusts(self, target_xyz_force):
-        return self.getThrusts(target_xyz_force, np.zeros(3))
-    
+    def getTranslationPwm(self, target_xyz_force):
+        return self.getThrustPwm(target_xyz_force, np.zeros(3))
+
     # Pure rotation
-    def getRotationThrusts(self, target_torque):
-        return self.getThrusts(np.zeros(3), target_torque)
-    
+    def getRotationPwm(self, target_torque):
+        return self.getThrustPwm(np.zeros(3), target_torque)

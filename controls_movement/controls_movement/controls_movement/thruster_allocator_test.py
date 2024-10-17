@@ -4,7 +4,7 @@ def main():
     t = ThrustAllocator()
     print(t.parameters)
     ''' Test translation '''
-    print("X translation: ", t.getTranslationThrusts([10, 0, 0])) # Translation in x-axis
+    print("X translation: ", t.getTranslationPwm([10, 0, 0])) # Translation in x-axis
     print("Y translation: ", t.getTranslationThrusts([0, 10, 0])) # Translation in y-axis
     print("Z translation: ", t.getTranslationThrusts([0, 0, 10])) # Translation in z-axis
     

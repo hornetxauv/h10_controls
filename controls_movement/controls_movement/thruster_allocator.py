@@ -38,7 +38,7 @@ thruster_biases = np.array([1.0,    # Front Left
                             1.4,])  # Middle Middle
 
 
-thrust_map = pd.read_csv("./thrust_map.csv", sep=',', header=None).values
+thrust_map = pd.read_csv("src/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values
 
 class ThrustAllocator:
     '''

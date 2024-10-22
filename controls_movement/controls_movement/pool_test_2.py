@@ -3,37 +3,54 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from controls_movement.thruster_allocator import ThrustAllocator
 
-t = ThrustAllocator()
+class ThrustPublisher(Node):
+
+    def __init__(self):
+        super().__init__('thrust_publisher')
+
+        # Create a publisher for the 'thruster_control' topic
+        self.publisher_ = self.create_publisher(Int32MultiArray, 'thruster_control', 10)
+
+        # Set the loop timer (1 Hz)
+        self.timer = self.create_timer(1.0, self.publish_thrust)
+
+        # Initialize the ThrustAllocator
+        self.thrust_allocator = ThrustAllocator()
+
+    def publish_thrust(self):
+        # Get thrust values using your ThrustAllocator class
+        int_list = self.thrust_allocator.getThrustPwm([10, 0, 0])
+
+        # Create a message and assign the data
+        msg = Int32MultiArray()
+        msg.data = int_list
+
+        # Publish the message
+        self.get_logger().info(f"Publishing: {int_list}")
+        self.publisher_.publish(msg)
 
 
-def publisher():
-    # Initialize the ROS node
-    rospy.init_node('int_list_publisher', anonymous=True)
-    
-    # Create a publisher that publishes to the 'thruster_control' topic
-    pub = rospy.Publisher('thruster_control', Int32MultiArray, queue_size=10)
-    
-    # Set the loop rate (1 Hz in this case)
-    rate = rospy.Rate(1)  # 1 Hz
+def main(args=None):
+    # Initialize the ROS client library
+    rclpy.init(args=args)
 
-    # Define the list of 7 integers
-    int_list = t.getThrustPwm([10, 0, 0])
+    # Create the node and spin it
+    thrust_publisher = ThrustPublisher()
 
-    # Prepare the message
-    msg = Int32MultiArray()
-    msg.data = int_list
+    try:
+        rclpy.spin(thrust_publisher)
+    except KeyboardInterrupt:
+        pass
 
-    # Main loop to keep publishing the message
-    while not rospy.is_shutdown():
-        rospy.loginfo(f"Publishing: {int_list}")
-        pub.publish(msg)
-        rate.sleep()
+    # Destroy the node explicitly
+    thrust_publisher.destroy_node()
+
+    # Shutdown the ROS client library
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
-    try:
-        publisher()
-    except rospy.ROSInterruptException:
-        pass
+    main()
 
 """
 class MinimalPublisher(Node):

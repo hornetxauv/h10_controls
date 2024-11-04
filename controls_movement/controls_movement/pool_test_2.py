@@ -19,8 +19,9 @@ class ThrustPublisher(Node):
 
     def publish_thrust(self):
         # Get thrust values using your ThrustAllocator class
-        int_list = self.thrust_allocator.getThrustPwm([10, 0, 0])
-
+        int_list = self.thrust_allocator.getThrustPwm([10, 0, 0], [0, 0, 0]) 
+        int_list = [int(value) for value in int_list] #required for the Int32MultiArray type for some reason
+       
         # Create a message and assign the data
         msg = Int32MultiArray()
         msg.data = int_list

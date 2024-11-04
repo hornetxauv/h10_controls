@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             "moveLeft = controls_movement.pool_test_2:main",
+            "PID_test = controls_movement.vert_PID:main",
+            "read_depth_test = controls_movement.read_depth:main",
             #"moveRight = controls_core.move_test:moveRight",
             #"moveFront = controls_core.move_test:moveFront",
             #"moveBack = controls_core.move_test:moveBack",

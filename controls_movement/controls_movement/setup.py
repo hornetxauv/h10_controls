@@ -21,11 +21,11 @@ setup(
     entry_points={
         'console_scripts': [
             "moveLeft = controls_movement.pool_test_2:main",
-            #"moveRight = controls_core.move_test:moveRight",
-            #"moveFront = controls_core.move_test:moveFront",
-            #"moveBack = controls_core.move_test:moveBack",
-            #"moveUp = controls_core.move_test:moveUp",
-            #"moveDown = controls_core.move_test:moveDown",
+            "moveRight = controls_core.move_test:moveRight",
+            "moveFront = controls_core.move_test:moveFront",
+            "moveBack = controls_core.move_test:moveBack",
+            "moveUp = controls_core.move_test:moveUp",
+            "moveDown = controls_core.move_test:moveDown",
         ],
     },
 )

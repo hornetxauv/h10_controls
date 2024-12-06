@@ -3,37 +3,52 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from controls_movement.thruster_allocator import ThrustAllocator
 
-t = ThrustAllocator()
+class IntListPublisher(Node):
+    def __init__(self):
+        super().__init__('int_list_publisher')
+        
+        # Create a publisher that publishes to the 'thruster_control' topic
+        self.publisher_ = self.create_publisher(Int32MultiArray, 'thruster_control', 10)
+        
+        # Create a timer that triggers the publish callback at 1 Hz
+        self.timer = self.create_timer(1.0, self.publish_message)
+        
+        # Initialize the ThrustAllocator and generate the thrust list
+        self.thrust_allocator = ThrustAllocator()
+        self.int_list = self.thrust_allocator.getThrustPwm([10, 0, 0], [10, 10, 10])
+        
+        self.get_logger().info("IntListPublisher initialized and ready to publish.")
+
+    def publish_message(self):
+        self.int_list = [int(max(min(val, 2147483647), -2147483648)) for val in self.int_list]
+        # Create and publish the message
+        msg = Int32MultiArray()
+        msg.data = self.int_list
+        
+        self.publisher_.publish(msg)
+        self.get_logger().info(f"Publishing: {msg.data}")
 
 
-def publisher():
-    # Initialize the ROS node
-    rospy.init_node('int_list_publisher', anonymous=True)
+def main(args=None):
+    # Initialize the rclpy library
+    rclpy.init(args=args)
     
-    # Create a publisher that publishes to the 'thruster_control' topic
-    pub = rospy.Publisher('thruster_control', Int32MultiArray, queue_size=10)
+    # Create an instance of the IntListPublisher node
+    node = IntListPublisher()
     
-    # Set the loop rate (1 Hz in this case)
-    rate = rospy.Rate(1)  # 1 Hz
+    try:
+        # Spin the node to keep it active
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info("Shutting down the IntListPublisher node.")
+    finally:
+        # Destroy the node explicitly and shutdown rclpy
+        node.destroy_node()
+        rclpy.shutdown()
 
-    # Define the list of 7 integers
-    int_list = t.getThrustPwm([10, 0, 0])
-
-    # Prepare the message
-    msg = Int32MultiArray()
-    msg.data = int_list
-
-    # Main loop to keep publishing the message
-    while not rospy.is_shutdown():
-        rospy.loginfo(f"Publishing: {int_list}")
-        pub.publish(msg)
-        rate.sleep()
 
 if __name__ == '__main__':
-    try:
-        publisher()
-    except rospy.ROSInterruptException:
-        pass
+    main()
 
 """
 class MinimalPublisher(Node):

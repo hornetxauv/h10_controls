@@ -1,6 +1,10 @@
 from thruster_allocator import ThrustAllocator
 import time
 
+'''
+Standard PID implementation
+Used as a class since both yaw and pitch use different instances of the same PID algo
+'''
 class PIDController:
     def __init__(self, Kp, Ki, Kd):
         self.Kp = Kp
@@ -19,6 +23,16 @@ class PIDController:
         return output
 
 
+'''
+This class uses visual feed to determine yaw and pitch
+From which we conduct PID
+
+e.g., on the camera feed
+object is detected at (20, 25)
+when the bot moves straight forward, it moves towards the point at (0, 0) (this point is fixed regardless of the robot's true orientation)
+then, we will use our error values as (0, 0) - (20, 25) == (-20, -25)
+on which, we will do PID
+'''
 class OrientationController:
     def __init__(self, thrust_allocator):
 

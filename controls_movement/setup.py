@@ -26,6 +26,9 @@ setup(
             "moveBack = controls_core.move_test:moveBack",
             "moveUp = controls_core.move_test:moveUp",
             "moveDown = controls_core.move_test:moveDown",
+
+            "vertPID = controls_movement.vertical_PID_test:main",
+            "vertPID_pub = controls_movement.vertical_PID_sample_pub:main",
         ],
     },
 )

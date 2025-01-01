@@ -4,6 +4,35 @@ from scipy import optimize
 
 thruster_positions = np.array(
     [
+        [-0.17887, 0.22066, 0.0095],       # Front Left
+        [0.176767, 0.222763, 0.0095],      # Front Right
+        [-0.176767, -0.222763, 0.0095],    # Rear Left
+        [0.176767, -0.222763, 0.0095],     # Rear Right
+        [-0.207469, 0.119782, -0.054804],  # Vert Front Left
+        [0.207469, 0.119782, -0.054804],   # Vert Front Right
+        [0, -0.239564, -0.054804],         # Vert Rear Middle
+    ]
+)
+
+thruster_directions = np.array(
+    [
+        [1, 1, 0],                  # Front Left
+        [-1, 1, 0],                 # Front Right
+        [-1, 1, 0],                 # Rear Left
+        [1, 1, 0],                  # Rear Right
+        [0, 0, 1],                  # Vert Front Left
+        [0, 0, 1],                  # Vert Front Right
+        [0, 0, 1],                  # Vert Rear Middle
+    ]
+)
+
+"""
+Old Values from H9
+Kept as reference jic the mapping was done wrongly
+All the code currently caa 2/1/25 is based on the H9 mapping
+
+thruster_positions = np.array(
+    [
         [-0.22, 0.238, -0.054],     # Front Left
         [0.22, 0.238, -0.054],      # Front Right
         [-0.22, -0.217, -0.054],    # Rear Left
@@ -25,6 +54,8 @@ thruster_directions = np.array(
         [0, 0, 1],                  # Middle Middle
     ]
 )
+"""
+
 thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1
 )

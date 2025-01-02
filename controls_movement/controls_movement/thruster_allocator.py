@@ -2,6 +2,23 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
+'''
+Thruster positions are relative to the CG of the hull
+
+The 7 thrusters are ordered
+- Horizontal Thrusters: FL, FR, RL, RR
+- Vertical Thrusters: FL, FR, RM
+
+Direction convention is from the POV of the camera: 
+- +X is right
+- +Y is forward
+- +Z is up
+'''
+
+thruster_names = np.array(
+    ["Hori Front Left", "Hori Front Right", "Hori Rear Left", "Hori Rear Right", "Vert Front Left", "Vert Front Right", "Vert Rear Middle"]
+)
+
 thruster_positions = np.array(
     [
         [-0.17887, 0.22066, 0.0095],       # Front Left

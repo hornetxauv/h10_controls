@@ -37,18 +37,18 @@ class OrientationController:
     def __init__(self, thrust_allocator):
 
         self.thrust_allocator = thrust_allocator
-        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)  
         #self.roll_pid = PIDController(*pid_gains['roll'])   No need for roll in this situation but it can be implemented too ig
+        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)  
         self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)     
 
     def correct_orientation(self, current_pitch, current_roll, current_yaw, dt):
 
-        pitch_output = self.pitch_pid.compute(setpoint=0, current_value=current_pitch, dt=dt)
         roll_output = 0
+        pitch_output = self.pitch_pid.compute(setpoint=0, current_value=current_pitch, dt=dt)
         yaw_output = self.yaw_pid.compute(setpoint=0, current_value=current_yaw, dt=dt)
 
         # Get PWM values from the thrust allocator
-        pwm_values = self.thrust_allocator.getRotationPwm([pitch_output, roll_output, yaw_output])
+        pwm_values = self.thrust_allocator.getRotationPwm([roll_output, pitch_output, yaw_output])
         return pwm_values
 
 

@@ -6,22 +6,55 @@ izen@Izen-Pavillion:~/HornetXAuv_ws$ python3 ./src/h10_controls/controls_movemen
 
 """
 
+import numpy as np
+from thruster_allocator import ThrustAllocator, thruster_names, thrust_map
 
-from thruster_allocator import ThrustAllocator
+def test_thruster_matrix(t):
+    for i in range(7):
+        s = thruster_names[i] + "\t"
+        for j in range(6):
+            s += " " + str(t.parameters[j][i])
+    
+        print(s)
+
+def test_translation(t):
+    ''' Test translation '''
+    vfunc = pwm_to_thrust()
+    print("+X translation: ", vfunc(t.getTranslationPwm([10, 0, 0]))) # Translation in x-axis
+    print("+Y translation: ", vfunc(t.getTranslationPwm([0, 10, 0]))) # Translation in y-axis
+    print("+Z translation: ", vfunc(t.getTranslationPwm([0, 0, 10]))) # Translation in z-axis
+
+def test_rotation(t):
+    ''' Test rotation'''
+    vfunc = pwm_to_thrust()
+    print("+Roll rotation: ", vfunc(t.getRotationPwm([10, 0, 0]))) # Roll right
+    print("-Roll rotation: ", vfunc(t.getRotationPwm([-10, 0, 0]))) # Roll left
+    print("+Pitch rotation: ", vfunc(t.getRotationPwm([0, 10, 0]))) # Pitch up
+    print("-Pitch rotation: ", vfunc(t.getRotationPwm([0, -10, 0]))) # Pitch down
+    print("+Yaw rotation: ", vfunc(t.getRotationPwm([0, 0, 10]))) # Yaw left 
+    print("-Yaw rotation: ", vfunc(t.getRotationPwm([0, 0, -10]))) # Yaw right
+
+def pwm_to_thrust():
+    def get_thrust(pwm):
+        idx = np.searchsorted(thrust_map[:, 1], pwm, 'left')
+        return thrust_map[idx][0]
+    
+    return np.vectorize(get_thrust)
 
 def main():
     t = ThrustAllocator()
-    print(t.parameters)
-    ''' Test translation '''
-    print("X translation: ", t.getTranslationPwm([10, 0, 0])) # Translation in x-axis
-    print("Y translation: ", t.getTranslationPwm([0, 10, 0])) # Translation in y-axis
-    print("Z translation: ", t.getTranslationPwm([0, 0, 10])) # Translation in z-axis
+
+    print("--- Thruster matrix ---")
+    test_thruster_matrix(t)
+    print("\n\n")
+
+    print("--- Thruster translation test---")
+    test_translation(t)
+    print("\n\n")
     
-    ''' Test rotation'''
-    print("XY +ve rotation: ", t.getRotationPwm([0, 0, -10])) # Positive Yaw
-    print("XY -ve rotation: ", t.getRotationPwm([0, 0, 10])) # Negative Yaw
-    print("Z +ve rotation: ", t.getRotationPwm([-10, 0, 0])) # Positive Pitch
-    print("Z -ve rotation: ", t.getRotationPwm([10, 0, 0])) # Negative Pitch
+    print("--- Thruster rotation test ---")
+    test_rotation(t)   
+    print("\n\n")
 
 if __name__ == "__main__":
     main()

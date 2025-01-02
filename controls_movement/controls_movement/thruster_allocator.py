@@ -19,7 +19,7 @@ thruster_directions = np.array(
         [1, 1, 0],                  # Front Left
         [-1, 1, 0],                 # Front Right
         [-1, 1, 0],                 # Rear Left
-        [1, 1, 0],                  # Rear Right
+        [-1, -1, 0],                # Rear Right
         [0, 0, 1],                  # Vert Front Left
         [0, 0, 1],                  # Vert Front Right
         [0, 0, 1],                  # Vert Rear Middle

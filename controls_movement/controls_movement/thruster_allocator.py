@@ -75,8 +75,8 @@ thrust_map = pd.read_csv("./src/h10_controls/controls_movement/controls_movement
 class ThrustAllocator:
     '''
     ThrustAllocator solves the matrix Ax = b, where
-    A (parameters) is a 6 x 7 matrix of unit xyz force, unit torque vector (in rpy),
-    b (output) is the expected xyz force, torque vector
+    A (parameters) is a 6 x 7 matrix of unit xyz force, unit rpy,
+    b (output) is the expected xyz force, rpy
     x is the force for each thrusters
     '''
     def __init__(
@@ -92,24 +92,25 @@ class ThrustAllocator:
 
     # Create coefficient matrix
     def initCoefficientMatrix(self):
-        unit_torque = np.cross(self.thruster_positions, self.thruster_directions)
+        unit_torque = np.cross(self.thruster_positions, self.thruster_directions).T
+        unit_rpy = np.array([unit_torque[1], unit_torque[0], unit_torque[2]])
         return np.concatenate(
-            (self.thruster_directions.T, unit_torque.T)
+            (self.thruster_directions.T, unit_rpy)
         )
 
-    def getThrusts(self, target_xyz_force, target_torque):
-        output = self.getOutputMatrix(target_xyz_force, target_torque)
+    def getThrusts(self, target_xyz_force, target_rpy):
+        output = self.getOutputMatrix(target_xyz_force, target_rpy)
         min_thrust = self.thrust_map[0][0]
         max_thrust = self.thrust_map[-1][0]
         thrust_bound = (min_thrust, max_thrust)
 
         return optimize.lsq_linear(self.parameters, output, thrust_bound).x
     
-    def getOutputMatrix(self, target_xyz_force, target_torque):
+    def getOutputMatrix(self, target_xyz_force, target_rpy):
         target_xyz_force = np.array(target_xyz_force)
-        target_torque = np.array(target_torque)
+        target_rpy = np.array(target_rpy)
          
-        return np.append(target_xyz_force, target_torque)
+        return np.append(target_xyz_force, target_rpy)
 
     
     def thrustToPwm(self, thrust_forces):
@@ -120,8 +121,8 @@ class ThrustAllocator:
         
         return pwm
     
-    def getThrustPwm(self, target_xyz_force, target_torque):
-        thrust_forces = self.getThrusts(target_xyz_force, target_torque)
+    def getThrustPwm(self, target_xyz_force, target_rpy):
+        thrust_forces = self.getThrusts(target_xyz_force, target_rpy)
         pwm = self.thrustToPwm(thrust_forces)
 
         return pwm
@@ -131,5 +132,5 @@ class ThrustAllocator:
         return self.getThrustPwm(target_xyz_force, np.zeros(3))
 
     # Pure rotation
-    def getRotationPwm(self, target_torque):
-        return self.getThrustPwm(np.zeros(3), target_torque)
+    def getRotationPwm(self, target_rpy):
+        return self.getThrustPwm(np.zeros(3), target_rpy)

@@ -3,7 +3,7 @@ import numpy as np
 from controls_core.attitude_control import AttitudeControl
 from controls_core.params import rollPID, yawPID
 from controls_core.thruster_allocator import ThrustAllocator
-from imu_msg.msg import Imu
+from msg_types.msg import IMU
 from rclpy.node import Node
 from thrusters.thrusters import ThrusterControl
 
@@ -15,15 +15,15 @@ class Driver(Node):
     def __init__(self) -> None:
         super().__init__("driver_node")
         self.state_subscriber = self.create_subscription(
-            Imu, "/sensors/imu", self.attitudeControl, 10
+            IMU, "/sensors/imu", self.attitudeControl, 10
         )
         self.attitudeControl = AttitudeControl(rollPID, yawPID)
 
         self.linear_acc = np.array([0, 0, 0])
         self.angular_acc = np.array([0, 0, 0])
 
-    def _drive(self, msg: Imu):
-        currAttRPY = [msg.roll_pitch_yaw.x, msg.roll_pitch_yaw.y, msg.roll_pitch_yaw.z]
+    def _drive(self, msg: IMU):
+        currAttRPY = [msg.roll, msg.pitch, msg.yaw]
         attCorr = self.attitudeControl.getAttitudeCorrection(
             currAttRPY=currAttRPY, targetAttRPY=[0, 0, 0]
         )

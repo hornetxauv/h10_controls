@@ -1,4 +1,6 @@
 from controls_movement.thruster_allocator import ThrustAllocator
+# not sure where the thrusters.py file will be located  for the below import vvv
+from thrusters.thrusters import ThrusterControl
 import time
 import rclpy
 from rclpy.node import Node
@@ -33,12 +35,13 @@ class PIDNode(Node):
         #still need to add compatibility for the roll pitch yaw data
         self.subscription = self.create_subscription(
             Float32,
-            'sensor_topic',  # replace with topic name from os_comms side, this will likely be the depth topic
+            '/sensors/depth',  # replace with topic name from os_comms side, this will likely be the depth topic
             self.sensor_callback,
             10
         )
         self.depth_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        self.t = ThrustAllocator()
+        self.thrustAllocator = ThrustAllocator()
+        self.thrusterControl = ThrusterControl()
         self.last_time = None
 
     def sensor_callback(self, msg):
@@ -60,11 +63,14 @@ class PIDNode(Node):
         # Compute PID output
         pid_output = self.depth_pid.compute(setpoint=0, current_value=msg.data, dt=dt)
 
-        thruster_pwm = self.t.getTranslationPwm([0, 0, pid_output])
+        thruster_pwm = self.thrustAllocator.getTranslationPwm([0, 0, pid_output])
 
         #To Add: publish pid_output to corresponding ros topic
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
         self.get_logger().info(f'dt: {dt}')
+
+        # set thruster values to the computed pwm values from ThrustAllocator
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
 def main(args=None):

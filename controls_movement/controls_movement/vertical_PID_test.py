@@ -85,7 +85,7 @@ class PIDNode(Node):
         # Timer for orientation control 
         '''
         we will continuously control for depth
-        and every 5 seconds, we will make a correction for orientation
+        and every self.ori_freq seconds, we will make a correction for orientation
         '''
         self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation)
 
@@ -123,7 +123,7 @@ class PIDNode(Node):
         self.get_logger().info(f'dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
-        # self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
 
     def control_orientation(self):
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
@@ -133,6 +133,8 @@ class PIDNode(Node):
         thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+
+        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
 
 
 

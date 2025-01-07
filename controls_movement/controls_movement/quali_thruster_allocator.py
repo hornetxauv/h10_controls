@@ -1,5 +1,8 @@
-from thruster_allocator import ThrustAllocator
-import time
+from controls_movement.thruster_allocator import ThrustAllocator
+from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Int32MultiArray, Float32
 
 '''
 Standard PID implementation
@@ -24,7 +27,7 @@ class PIDController:
 
 
 '''
-This class uses visual feed to determine yaw and pitch
+This class uses visual feed to determine desired translation in vertical and L-R directions
 From which we conduct PID
 
 e.g., on the camera feed
@@ -33,50 +36,74 @@ when the bot moves straight forward, it moves towards the point at (0, 0) (this 
 then, we will use our error values as (0, 0) - (20, 25) == (-20, -25)
 on which, we will do PID
 '''
-class OrientationController:
-    def __init__(self, thrust_allocator):
+class PIDNode(Node):
+    def __init__(self):
+        super().__init__('pid_node')
+        
+        #Subscribe to X, Z error data
+        self.subscription = self.create_subscription(
+            Int32MultiArray,
+            'TO_BE_FILLED_IN',
+            self.error_callback,
+            10
+        )
+        
+        # Current errors that will be updated every time ros topic is published to
+        self.x_error = 0.0
+        self.z_error = 0.0
 
-        self.thrust_allocator = thrust_allocator
-        #self.roll_pid = PIDController(*pid_gains['roll'])   No need for roll in this situation but it can be implemented too ig
-        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)  
-        self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)     
+        ############################################################################
+        ############################################################################
+        # PID parameters
 
-    def correct_orientation(self, current_pitch, current_roll, current_yaw, dt):
+        self.x_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
+        self.z_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
 
-        roll_output = 0
-        pitch_output = self.pitch_pid.compute(setpoint=0, current_value=current_pitch, dt=dt)
-        yaw_output = self.yaw_pid.compute(setpoint=0, current_value=current_yaw, dt=dt)
+        ############################################################################
+        ############################################################################
+        
+        
+        self.thrustAllocator = ThrustAllocator()
 
-        # Get PWM values from the thrust allocator
-        pwm_values = self.thrust_allocator.getRotationPwm([roll_output, pitch_output, yaw_output])
-        return pwm_values
+        self.thrusterControl = ThrusterControl()
 
-
-
-
-
-
-#constant
-dt = 0.4
-
-def main():
-    t = ThrustAllocator()
-    controller = OrientationController(thrust_allocator=t)
-    while True:
-        current_pitch = 5  #example values. need to find a way to read from perc side the actual values!
-        current_roll = 0
-        current_yaw = 3
-
-        if (abs(current_pitch) > 3 or abs(current_yaw) > 3): #if error exceeds a certain range, we use PID to correct for it
-            pwm_values = controller.correct_orientation(current_pitch, current_roll, current_yaw, dt)
-            print(pwm_values)
-        else:
-            print(t.getTranslationPwm([10, 0, 0])) #move straight ahead
-
-        time.sleep(dt)
+        self.last_time = None
 
 
+    def error_callback(self, msg):
+        x_error = msg.data[0]  #need to see how P-L side gonna structure the message
+        z_error = msg.data[1]
+
+        # Extract the timestamp from the message header
+        current_time = self.get_clock().now().to_msg()
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9
+
+        if self.last_time is None:
+            self.last_time = current_seconds
+            return #dt is still zero, so do not do PID yet
+        
+        dt = current_seconds - self.last_time
+        self.last_time = current_seconds
+
+        x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+        z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
+        y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+
+        thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
+
+        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}')
+
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
-if __name__ == "__main__":
+def main(args=None):
+    rclpy.init(args=args)
+    pid_node = PIDNode()
+    rclpy.spin(pid_node)
+    pid_node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
     main()

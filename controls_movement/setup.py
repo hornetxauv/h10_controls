@@ -29,6 +29,11 @@ setup(
 
             "vertPID = controls_movement.vertical_PID_test:main",
             "vertPID_pub = controls_movement.vertical_PID_sample_pub:main",
+
+            "uturn = controls_movement.uturn_test:main",
+
+            "qualiGate = controls_movement.quali_thruster_allocator:main",
+            "qualiGate_pub = controls_movement.quali_thruster_sample_pub:main",
         ],
     },
 )

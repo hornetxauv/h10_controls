@@ -29,6 +29,8 @@ setup(
 
             "vertPID = controls_movement.vertical_PID_test:main",
             "vertPID_pub = controls_movement.vertical_PID_sample_pub:main",
+
+            "uturn = controls_movement.uturn_test:main",
         ],
     },
 )

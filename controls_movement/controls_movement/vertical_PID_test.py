@@ -1,6 +1,6 @@
 from controls_movement.thruster_allocator import ThrustAllocator
-# not sure where the thrusters.py file will be located  for the below import vvv
-from thrusters.thrusters import ThrusterControl
+from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
+from msg_types.msg import IMU
 import time
 import rclpy
 from rclpy.node import Node
@@ -27,24 +27,76 @@ class PIDController:
 class PIDNode(Node):
     def __init__(self):
         super().__init__('pid_node')
-        self.publisher = self.create_publisher(
-            Int32MultiArray, 
-            'thruster_control_topic', 
-            10)
         
-        #still need to add compatibility for the roll pitch yaw data
+        #Subscribe to Depth Data
         self.subscription = self.create_subscription(
             Float32,
-            '/sensors/depth',  # replace with topic name from os_comms side, this will likely be the depth topic
-            self.sensor_callback,
+            '/sensors/depth',
+            self.depth_callback,
             10
         )
+
+        #Subscribe to Roll, Pitch, Yaw data
+        self.subscriptionIMU = self.create_subscription(
+            IMU, #custom IMU msg type
+            '/sensors/imu',  
+            self.imu_callback,
+            10
+        )
+
+        # Latest sensor readings
+        self.current_depth = 0.0
+        self.current_roll = 0.0
+        self.current_pitch = 0.0
+        self.current_yaw = 0.0
+
+
+        ############################################################################
+        ############################################################################
+        # PID parameters
+
+
+        self.desired_depth = 10.0  # Example depth to maintain
+        self.desired_roll = 0.0    # Example orientation targets
+        self.desired_pitch = 0.0
+        self.desired_yaw = 0.0
+
+
         self.depth_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+
+        self.roll_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+
+
+        # Time passed between each orientation correction (in seconds)
+        self.ori_freq = 2.0
+
+
+        ############################################################################
+        ############################################################################
+
+
+
         self.thrustAllocator = ThrustAllocator()
-        self.thrusterControl = ThrusterControl()
+        #self.thrusterControl = ThrusterControl()   
         self.last_time = None
 
-    def sensor_callback(self, msg):
+        # Timer for orientation control 
+        '''
+        we will continuously control for depth
+        and every 5 seconds, we will make a correction for orientation
+        '''
+        self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation)
+
+    def imu_callback(self, msg):
+        self.current_roll = msg.roll
+        self.current_pitch = msg.pitch
+        self.current_yaw = msg.yaw
+    
+    def depth_callback(self, msg):
+        self.current_depth = msg.data
+
         '''
         dt needs to be calculated dynamically, as the duration between each publish to the imu ros topic may vary
         the following code uses the timestamp that comes with each ros msg to calculate dt
@@ -55,22 +107,33 @@ class PIDNode(Node):
 
         if self.last_time is None:
             self.last_time = current_seconds
-            return
-
+            return #dt is still zero, so do not do PID yet
+        
         dt = current_seconds - self.last_time
         self.last_time = current_seconds
 
-        # Compute PID output
-        pid_output = self.depth_pid.compute(setpoint=0, current_value=msg.data, dt=dt)
+        self.control_depth(dt)
 
+    def control_depth(self, dt):
+        # Compute PID output
+        pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
         thruster_pwm = self.thrustAllocator.getTranslationPwm([0, 0, pid_output])
 
-        #To Add: publish pid_output to corresponding ros topic
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
         self.get_logger().info(f'dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        # self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+
+    def control_orientation(self):
+        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
+        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
+        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)
+
+        thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
+
+        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+
 
 
 def main(args=None):

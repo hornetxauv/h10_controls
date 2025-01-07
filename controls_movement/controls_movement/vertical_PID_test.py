@@ -79,7 +79,7 @@ class PIDNode(Node):
 
 
         self.thrustAllocator = ThrustAllocator()
-        #self.thrusterControl = ThrusterControl()   
+        self.thrusterControl = ThrusterControl()   
         self.last_time = None
 
         # Timer for orientation control 
@@ -123,7 +123,7 @@ class PIDNode(Node):
         self.get_logger().info(f'dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
-        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
     def control_orientation(self):
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
@@ -133,8 +133,10 @@ class PIDNode(Node):
         thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        self.get_logger().info(f'Current Depth: {self.current_depth}')
+        self.get_logger().info(f'(R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw})')
 
-        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
 

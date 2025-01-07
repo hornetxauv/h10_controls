@@ -52,11 +52,20 @@ class PIDNode(Node):
         self.x_error = 0.0
         self.z_error = 0.0
 
+        ############################################################################
+        ############################################################################
+        # PID parameters
+
         self.x_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
         self.z_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
+
+        ############################################################################
+        ############################################################################
+        
+        
         self.thrustAllocator = ThrustAllocator()
 
-        """ self.thrusterControl = ThrusterControl() """
+        self.thrusterControl = ThrusterControl()
 
         self.last_time = None
 
@@ -83,8 +92,9 @@ class PIDNode(Node):
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}')
 
-        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
 def main(args=None):

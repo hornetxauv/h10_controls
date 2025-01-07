@@ -71,7 +71,7 @@ class PIDNode(Node):
 
 
         self.thrustAllocator = ThrustAllocator()
-        """ self.thrusterControl = ThrusterControl() """  
+        self.thrusterControl = ThrusterControl()
         self.last_time = None
 
 
@@ -92,6 +92,8 @@ class PIDNode(Node):
         
         error = self.desired_yaw - self.current_yaw
 
+        self.get_logger().info(f'Current Yaw: {self.current_yaw}')
+
         if abs(error) <= self.yaw_tolerance:
             self.get_logger().info("Yaw target reached")
             self.isYawTesting = False
@@ -103,7 +105,7 @@ class PIDNode(Node):
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
 
-        """ self.thrusterControl.setThrusters(thrustValues=thruster_pwm) """
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
     def imu_callback(self, msg):
@@ -119,6 +121,8 @@ class PIDNode(Node):
         thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 
 

@@ -2,7 +2,7 @@ from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray, Float32
+from std_msgs.msg import Float32MultiArray
 
 '''
 Standard PID implementation
@@ -42,8 +42,8 @@ class PIDNode(Node):
         
         #Subscribe to X, Z error data
         self.subscription = self.create_subscription(
-            Int32MultiArray,
-            'TO_BE_FILLED_IN',
+            Float32MultiArray,
+            'perc/quali_gate',
             self.error_callback,
             10
         )

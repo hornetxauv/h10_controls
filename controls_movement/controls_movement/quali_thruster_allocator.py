@@ -25,6 +25,17 @@ class PIDController:
         output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         return output
 
+def camera_feed_to_pwm(x_error, z_error, distance, dt, x_PID, z_PID, thrustAllocator):
+    if distance == 0:
+        x_output = 0.0
+        z_output = 0.0
+        y_output = 0.0
+    else:
+        x_output = x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+        z_output = z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
+        y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+
+    return thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
 '''
 This class uses visual feed to determine desired translation in vertical and L-R directions
@@ -74,31 +85,29 @@ class PIDNode(Node):
         x_error = msg.data[0]  #need to see how P-L side gonna structure the message
         z_error = msg.data[1]
         distance = msg.data[2]
-
-        if distance == 0:
-            x_output = 0.0
-            z_output = 0.0
-            y_output = 0.0
-        else:
-            # Extract the timestamp from the message header
-            current_time = self.get_clock().now().to_msg()
-            current_seconds = current_time.sec + current_time.nanosec * 1e-9
-
-            if self.last_time is None:
-                self.last_time = current_seconds
-                return #dt is still zero, so do not do PID yet
-            
-            dt = current_seconds - self.last_time
-            self.last_time = current_seconds
-
-            x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
-            z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
-            y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
-
-        thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
-
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        
         self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
+
+        # Extract the timestamp from the message header
+        current_time = self.get_clock().now().to_msg()
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9
+
+        if self.last_time is None:
+            self.last_time = current_seconds
+            return #dt is still zero, so do not do PID yet
+        
+        dt = current_seconds - self.last_time
+        self.last_time = current_seconds
+
+        thruster_pwm = camera_feed_to_pwm(x_error=x_error, 
+                                          z_error=z_error, 
+                                          distance=distance, 
+                                          dt=dt, 
+                                          x_PID=self.x_PID, 
+                                          z_PID=self.z_PID, 
+                                          thrustAllocator=self.thrustAllocator)
+        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+
 
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 

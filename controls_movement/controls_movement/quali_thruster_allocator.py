@@ -4,6 +4,14 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 
+from .control_panel import create_control_panel
+
+values = {
+    'z offset * 10': [10, 100]
+}
+# value, maximum, smaller_than
+create_control_panel(values)
+
 '''
 Standard PID implementation
 Used as a class since both yaw and pitch use different instances of the same PID algo
@@ -72,14 +80,13 @@ class PIDNode(Node):
 
     def error_callback(self, msg):
         x_error = msg.data[0]  #need to see how P-L side gonna structure the message
-        z_error = msg.data[1]
+        z_error = msg.data[1]        
+        distance = msg.data[2]
         distance = msg.data[2]
 
-        if distance == 0:
-            x_output = 0.0
-            z_output = 0.0
-            y_output = 0.0
-        else:
+        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
+
+        if distance != 0:
             # Extract the timestamp from the message header
             current_time = self.get_clock().now().to_msg()
             current_seconds = current_time.sec + current_time.nanosec * 1e-9
@@ -94,12 +101,14 @@ class PIDNode(Node):
             x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
             z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+        
+        z_output += values['z offset * 10'][0]/10
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
+        self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
-
+        
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
 

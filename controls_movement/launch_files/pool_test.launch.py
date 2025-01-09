@@ -23,6 +23,7 @@ def generate_launch_description():
         Node(package="quali_gate_detector", executable="detector"),
         Node(package="quali_gate_detector", executable="detector_listener"),
         Node(package="controls_movement", executable="qualiGate"),
-        Node(package="controls_movement", executable="qualiGate_pub"),
+        # Node(package="controls_movement", executable="qualiGate_pub"),
     ]
     return LaunchDescription(ld)
+    

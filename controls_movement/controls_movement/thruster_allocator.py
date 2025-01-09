@@ -82,8 +82,8 @@ thruster_biases = np.array([1.0,    # Front Left
                             1.0,    # Rear Left
                             1.0,    # Rear Right
                             1.0,    # Middle Left
-                            1.0,    # Middle Right
-                            1.4,])  # Middle Middle
+                            1.4,    # Middle Right
+                            1.0,])  # Middle Middle
 
 
 thrust_map = pd.read_csv("./src/h10_controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values

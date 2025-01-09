@@ -73,7 +73,7 @@ class PIDNode(Node):
         # PID parameters
 
         self.x_PID = PIDController(Kp=values['x Kp'][0], Ki=values['x Ki'][0], Kd=values['x Kd'][0])
-        self.z_PID = PIDController(Kp=values['y Kp'][0], Ki=values['y Ki'][0], Kd=values['y Kd'][0])
+        self.z_PID = PIDController(Kp=values['z Kp'][0], Ki=values['z Ki'][0], Kd=values['z Kd'][0])
 
         ############################################################################
         ############################################################################

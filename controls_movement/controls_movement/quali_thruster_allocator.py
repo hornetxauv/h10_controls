@@ -1,10 +1,9 @@
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
+from control_panel.control_panel import create_control_panel #this is a package in PL repo
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
-
-from .control_panel import create_control_panel
 
 values = {
     'z offset * 10': [10, 100]

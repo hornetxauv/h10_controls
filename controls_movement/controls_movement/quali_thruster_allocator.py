@@ -9,10 +9,16 @@ write = sys.stdout.write
 flush = sys.stdout.flush
 
 values = {
-    'z offset * 10': [10, 100]
+    'z offset': [1.0, 50, 0.1, 10],
+    'x Kp': [1.0, 10, 0.1, 10],
+    'x Ki': [0.01, 1, 0.01, 100],
+    'x Kd': [0.4, 10, 0.1, 10],
+    'z Kp': [1.0, 10, 0.1, 10],
+    'z Ki': [0.01, 1, 0.01, 100],
+    'z Kd': [0.4, 10, 0.1, 10],
 }
-# value, maximum, smaller_than
-create_control_panel(values)
+# can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
+create_control_panel("quali thruster PID", values)
 
 '''
 Standard PID implementation
@@ -66,8 +72,8 @@ class PIDNode(Node):
         ############################################################################
         # PID parameters
 
-        self.x_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
-        self.z_PID = PIDController(Kp = 1.0, Ki = 0.01, Kd = 0.4)
+        self.x_PID = PIDController(Kp=values['x Kp'][0], Ki=values['x Ki'][0], Kd=values['x Kd'][0])
+        self.z_PID = PIDController(Kp=values['y Kp'][0], Ki=values['y Ki'][0], Kd=values['y Kd'][0])
 
         ############################################################################
         ############################################################################
@@ -108,12 +114,13 @@ class PIDNode(Node):
             y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
         #attempt to set constant z_output to keep the AUV neutrally buoyant
-        z_output += values['z offset * 10'][0]/10
+        z_output += values['z offset'][0]
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
         # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        self.get_logger().info(f"{values['x Kp'][0]} {values['x Ki'][0]} {values['x Kd'][0]}")
         flush()
         
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)

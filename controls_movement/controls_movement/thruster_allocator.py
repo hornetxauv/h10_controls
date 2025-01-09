@@ -1,6 +1,14 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
+from control_panel.control_panel import create_control_panel #this is a package in PL repo
+
+values = {
+    '1': [10, 50],
+    '2': [14, 50],
+    '3': [10, 50],
+}
+# create_control_panel("thruster biases", values)
 
 '''
 Thruster positions are relative to the CG of the hull
@@ -81,9 +89,9 @@ thruster_biases = np.array([1.0,    # Front Left
                             1.0,    # Front Right
                             1.0,    # Rear Left
                             1.0,    # Rear Right
-                            1.0,    # Middle Left
-                            1.4,    # Middle Right
-                            1.0,])  # Middle Middle
+                            values['1'][0]/10,    # Middle Left
+                            values['2'][0]/10,    # Middle Right
+                            values['3'][0]/10,])  # Middle Middle
 
 
 thrust_map = pd.read_csv("./src/h10_controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values

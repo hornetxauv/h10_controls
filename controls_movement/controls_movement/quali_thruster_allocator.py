@@ -81,29 +81,26 @@ class PIDNode(Node):
         x_error = msg.data[0]  #need to see how P-L side gonna structure the message
         z_error = msg.data[1]        
         distance = msg.data[2]
-
         self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
 
-        x_output = 0.0
-        z_output = 0.0
-        y_output = 10.0
+        # Extract the timestamp from the message header
+        current_time = self.get_clock().now().to_msg()
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9
 
-        # if distance != 0:
-        #     # Extract the timestamp from the message header
-        #     current_time = self.get_clock().now().to_msg()
-        #     current_seconds = current_time.sec + current_time.nanosec * 1e-9
+        if self.last_time is None:
+            self.last_time = current_seconds
+            return #dt is still zero, so do not do PID yet
 
-        #     if self.last_time is None:
-        #         self.last_time = current_seconds
-        #         return #dt is still zero, so do not do PID yet
-            
-        #     dt = current_seconds - self.last_time
-        #     self.last_time = current_seconds
+        dt = current_seconds - self.last_time
+        self.last_time = current_seconds
 
-        #     x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
-        #     z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
-        #     y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+        # only do PID if there is a gate detected, i.e. distance between gates =/= 0
+        if distance != 0:
+            x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+            z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
+            y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
+        #attempt to set constant z_output to keep the AUV neutrally buoyant
         z_output += values['z offset * 10'][0]/10
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])

@@ -4,6 +4,9 @@ from control_panel.control_panel import create_control_panel #this is a package 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
+import sys
+write = sys.stdout.write
+flush = sys.stdout.flush
 
 values = {
     'z offset * 10': [10, 100]
@@ -81,7 +84,7 @@ class PIDNode(Node):
         x_error = msg.data[0]  #need to see how P-L side gonna structure the message
         z_error = msg.data[1]        
         distance = msg.data[2]
-        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
+        # self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
 
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
@@ -94,6 +97,10 @@ class PIDNode(Node):
         dt = current_seconds - self.last_time
         self.last_time = current_seconds
 
+        x_output = 0.0
+        z_output = 0.0
+        y_output = 0.0
+
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if distance != 0:
             x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
@@ -105,8 +112,9 @@ class PIDNode(Node):
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
-        self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
+        # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        flush()
         
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 

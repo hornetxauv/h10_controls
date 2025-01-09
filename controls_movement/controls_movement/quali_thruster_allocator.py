@@ -105,7 +105,7 @@ class PIDNode(Node):
         #     z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
         #     y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
-        # z_output += values['z offset * 10'][0]/10
+        z_output += values['z offset * 10'][0]/10
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 

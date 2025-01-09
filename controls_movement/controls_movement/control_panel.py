@@ -1,4 +1,5 @@
 import cv2
+import threading
 
 control_panel_name = "Adjust Thresholds"
 
@@ -22,3 +23,6 @@ def create_control_panel(controls):
             maximum, 
             on_change
         )
+    input_thread = threading.Thread(target=cv2.waitKey)
+    input_thread.daemon = True
+    input_thread.start()

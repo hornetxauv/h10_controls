@@ -1,12 +1,9 @@
+import rclpy
+from rclpy.node import Node
+from custom_msgs.msg import GateDetection
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 from control_panel.control_panel import create_control_panel #this is a package in PL repo
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
-import sys
-write = sys.stdout.write
-flush = sys.stdout.flush
 
 values = {
     'z offset': [1.0, 50, 0.1, 10],
@@ -58,7 +55,7 @@ class PIDNode(Node):
         
         #Subscribe to X, Z error data
         self.subscription = self.create_subscription(
-            Float32MultiArray,
+            GateDetection,
             'perc/quali_gate',
             self.error_callback,
             10
@@ -87,10 +84,10 @@ class PIDNode(Node):
 
 
     def error_callback(self, msg):
-        x_error = msg.data[0]  #need to see how P-L side gonna structure the message
-        z_error = msg.data[1]        
-        distance = msg.data[2]
-        # self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {distance}')
+        x_error = msg.dx 
+        z_error = msg.dy
+        width = msg.width
+        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {width}')
 
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
@@ -108,7 +105,7 @@ class PIDNode(Node):
         y_output = 0.0
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
-        if distance != 0:
+        if width != 0:
             x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
             z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
@@ -121,7 +118,6 @@ class PIDNode(Node):
         # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
         # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
         self.get_logger().info(f"{values['x Kp'][0]} {values['x Ki'][0]} {values['x Kd'][0]}")
-        flush()
         
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 

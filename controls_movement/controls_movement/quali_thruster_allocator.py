@@ -3,16 +3,16 @@ from rclpy.node import Node
 from custom_msgs.msg import GateDetection
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-from control_panel.control_panel import create_control_panel #this is a package in PL repo
+from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
 
 values = {
-    'z offset': [1.0, 50, 0.1, 10],
-    'x Kp': [1.0, 10, 0.1, 10],
-    'x Ki': [0.01, 1, 0.01, 100],
-    'x Kd': [0.4, 10, 0.1, 10],
-    'z Kp': [1.0, 10, 0.1, 10],
-    'z Ki': [0.01, 1, 0.01, 100],
-    'z Kd': [0.4, 10, 0.1, 10],
+    'z offset': CPI(value=1.0, maximum=50, minimum=0.1, multiplier=10),
+    'x Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'x Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'x Kd': CPI(value=0.4, maximum=10, minimum=0.1, multiplier=10),
+    'z Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'z Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'z Kd': CPI(value=0.4, maximum=10, minimum=0.1, multiplier=10),
 }
 # can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
 create_control_panel("quali thruster PID", values)
@@ -69,15 +69,14 @@ class PIDNode(Node):
         ############################################################################
         # PID parameters
 
-        self.x_PID = PIDController(Kp=values['x Kp'][0], Ki=values['x Ki'][0], Kd=values['x Kd'][0])
-        self.z_PID = PIDController(Kp=values['z Kp'][0], Ki=values['z Ki'][0], Kd=values['z Kd'][0])
+        self.x_PID = PIDController(Kp=values['x Kp'].value, Ki=values['x Ki'].value, Kd=values['x Kd'].value)
+        self.z_PID = PIDController(Kp=values['z Kp'].value, Ki=values['z Ki'].value, Kd=values['z Kd'].value)
 
         ############################################################################
         ############################################################################
         
         
         self.thrustAllocator = ThrustAllocator()
-
         self.thrusterControl = ThrusterControl()
 
         self.last_time = None
@@ -111,13 +110,13 @@ class PIDNode(Node):
             y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
         #attempt to set constant z_output to keep the AUV neutrally buoyant
-        z_output += values['z offset'][0]
+        z_output += values['z offset'].value
 
         thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
 
         # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
         # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        self.get_logger().info(f"{values['x Kp'][0]} {values['x Ki'][0]} {values['x Kd'][0]}")
+        self.get_logger().info(f"{values['x Kp'].value} {values['x Ki'].value} {values['x Kd'].value}")
         
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 

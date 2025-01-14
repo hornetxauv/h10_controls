@@ -21,8 +21,8 @@ from control_panel.control_panel import create_control_panel, ControlPanelItem a
 '''
 
 def main():
-    thrusterAllocator = ThrustAllocator
-    #thrusterController = ThrusterControl
+    thrusterAllocator = ThrustAllocator()
+    thrusterController = ThrusterControl()
 
     while True:
 

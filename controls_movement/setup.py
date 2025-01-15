@@ -38,6 +38,8 @@ setup(
 
             "qualiGate = controls_movement.quali_thruster_allocator:main",
             "qualiGate_pub = controls_movement.quali_thruster_sample_pub:main",
+
+            "dirTest = controls_movement.simple_direction_test:main"
         ],
     },
 )

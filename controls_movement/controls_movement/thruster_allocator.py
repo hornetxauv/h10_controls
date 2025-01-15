@@ -8,7 +8,7 @@ values = {
     '2': CPI(value=14, maximum=50),
     '3': CPI(value=10, maximum=50),
 }
-# create_control_panel("thruster biases", values)
+# create_control_panel("thruster biases", values, no_new_thread=True)
 
 '''
 Thruster positions are relative to the CG of the hull
@@ -94,7 +94,7 @@ thruster_biases = np.array([1.0,    # Front Left
                             values['3'].value/10,])  # Middle Middle
 
 
-thrust_map = pd.read_csv("./src/h10_controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values
+thrust_map = pd.read_csv("./src/controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values
 #thrust_map = pd.read_csv("./thrust_map.csv", sep=',', header=None).values
 #./src/h10_controls/controls_movement/controls_movement/thrust_map.csv
 

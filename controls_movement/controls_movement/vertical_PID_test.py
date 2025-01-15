@@ -5,6 +5,35 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
+from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
+
+values = {
+    # 'z offset': CPI(value=1.0, maximum=50, minimum=0.1, multiplier=10),
+    # '0 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '1 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '2 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '3 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '4 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '5 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    # '6 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
+    'x': CPI(value=20, maximum=40, minimum=0, multiplier=1),
+    'y': CPI(value=20, maximum=40, minimum=0, multiplier=1),
+    'z': CPI(value=20, maximum=40, minimum=0, multiplier=1),
+    'depth Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'depth Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'depth Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
+    'roll Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'roll Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'roll Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
+    'pitch Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'pitch Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'pitch Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
+    'yaw Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
+    'yaw Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
+    'yaw Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
+}
+# can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
+create_control_panel("verti PID", values)
 
 class PIDController:
     def __init__(self, Kp, Ki, Kd):
@@ -62,12 +91,17 @@ class PIDNode(Node):
         self.desired_yaw = 0.0
 
 
-        self.depth_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        # self.depth_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
 
-        self.roll_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        # self.roll_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        # self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        # self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
+        
+        self.depth_pid = PIDController(Kp=values['depth Kp'].value, Ki=values['depth Ki'].value, Kd=values['depth Kd'].value)
 
+        self.roll_pid = PIDController(Kp=values['roll Kp'].value, Ki=values['roll Ki'].value, Kd=values['roll Kd'].value)
+        self.pitch_pid = PIDController(Kp=values['pitch Kp'].value, Ki=values['pitch Ki'].value, Kd=values['pitch Kd'].value)
+        self.yaw_pid = PIDController(Kp=values['yaw Kp'].value, Ki=values['yaw Ki'].value, Kd=values['yaw Kd'].value)
 
         # Time passed between each orientation correction (in seconds)
         self.ori_freq = 2.0
@@ -87,15 +121,18 @@ class PIDNode(Node):
         we will continuously control for depth
         and every self.ori_freq seconds, we will make a correction for orientation
         '''
-        self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation)
+        # self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation) #! to uncomment
 
     def imu_callback(self, msg):
         self.current_roll = msg.roll
         self.current_pitch = msg.pitch
-        self.current_yaw = msg.yaw
+        # self.current_yaw = msg.yaw #yaw is depth for now bcos joel made a mistake
+        self.current_depth = msg.yaw
     
     def depth_callback(self, msg):
-        self.current_depth = msg.data
+        # self.current_depth = msg.data
+
+        # self.get_logger().info('Depth: "%s"' % self.current_depth)
 
         '''
         dt needs to be calculated dynamically, as the duration between each publish to the imu ros topic may vary
@@ -103,7 +140,7 @@ class PIDNode(Node):
         '''
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
-        current_seconds = current_time.sec + current_time.nanosec * 1e-9
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
 
         if self.last_time is None:
             self.last_time = current_seconds
@@ -116,16 +153,30 @@ class PIDNode(Node):
 
     def control_depth(self, dt):
         # Compute PID output
+        print("control depth called")
         pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
-        thruster_pwm = self.thrustAllocator.getTranslationPwm([0, 0, pid_output])
+        translation = [0, 0, pid_output]
+        translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
+        thruster_pwm = self.thrustAllocator.getTranslationPwm(translation)
+        # thruster_pwm= [
+        #     values["0 pwm"].value, 
+        #     values["1 pwm"].value, 
+        #     values["2 pwm"].value, 
+        #     values["3 pwm"].value, 
+        #     values["4 pwm"].value, 
+        #     values["5 pwm"].value, 
+        #     values["6 pwm"].value]
 
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        self.get_logger().info(f'dt: {dt}')
+        self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
+        # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        # self.get_logger().info(f'dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        self.thrusterControl.setThrusters(thrustValues=thruster_pwm) #! to change back
+        # self.thrusterControl.setThrusters(thrustValues=[140, 140, 140, 140, 140, 140, 140])
 
     def control_orientation(self):
+        print("control orientation called")
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)
@@ -143,9 +194,15 @@ class PIDNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     pid_node = PIDNode()
-    rclpy.spin(pid_node)
-    pid_node.destroy_node()
-    rclpy.shutdown()
+    try:
+        while True:
+            rclpy.spin(pid_node)
+    except KeyboardInterrupt:
+        pid_node.thrusterControl.killThrusters()
+    finally:
+        pid_node.thrusterControl.killThrusters()
+        pid_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

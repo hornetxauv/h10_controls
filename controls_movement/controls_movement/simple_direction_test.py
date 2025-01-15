@@ -6,11 +6,13 @@ from thrusters.thrusters import ThrusterControl
 
 from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
 
+x=100
+
 values = {
     # 'z offset': CPI(value=1.0, maximum=50, minimum=0.1, multiplier=10),
-    'x': CPI(value=20, maximum=40, minimum=0, multiplier=1),
-    'y': CPI(value=20, maximum=40, minimum=0, multiplier=1),
-    'z': CPI(value=20, maximum=40, minimum=0, multiplier=1),
+    'x': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
+    'y': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
+    'z': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
 }
 # can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
 create_control_panel("verti PID", values)
@@ -30,20 +32,25 @@ create_control_panel("verti PID", values)
 def main():
     thrusterAllocator = ThrustAllocator()
     thrusterController = ThrusterControl()
+    try:
+        while True:
+            # Translation = [0, 0, 0]
+            Rotation = [values["x"].value-x/2, values["y"].value-x/2, values["z"].value-x/2]
 
-    while True:
+            #Rotation = [0, 0, 0]
+            #if all(val == 0 for val in Translation):
 
-        # Translation = [0, 0, 0]
-        Translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
+            thruster_pwm = thrusterAllocator.getRotationPwm(Rotation)
 
-        #Rotation = [0, 0, 0]
-        #if all(val == 0 for val in Translation):
+            print(thruster_pwm)
 
-        thruster_pwm = thrusterAllocator.getTranslationPwm(Translation)
+            thrusterController.setThrusters(thrustValues=thruster_pwm)
+    except KeyboardInterrupt:
+        thrusterController.killThrusters()
+    finally:
+        thrusterController.killThrusters()
+        rclpy.shutdown()
 
-        print(thruster_pwm)
-
-        thrusterController.setThrusters(thrustValues=thruster_pwm)
 
 if __name__ == "__main__":
     main()

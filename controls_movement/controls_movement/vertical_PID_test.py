@@ -19,18 +19,18 @@ values = {
     'x': CPI(value=20, maximum=40, minimum=0, multiplier=1),
     'y': CPI(value=20, maximum=40, minimum=0, multiplier=1),
     'z': CPI(value=20, maximum=40, minimum=0, multiplier=1),
-    'depth Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
-    'depth Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
-    'depth Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
-    'roll Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
-    'roll Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
-    'roll Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
-    'pitch Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
-    'pitch Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
-    'pitch Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
-    'yaw Kp': CPI(value=1.0, maximum=10, minimum=0.1, multiplier=10),
-    'yaw Ki': CPI(value=0.01, maximum=1, minimum=0.01, multiplier=100),
-    'yaw Kd': CPI(value=0.1, maximum=10, minimum=0.1, multiplier=10),
+    'depth Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'depth Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
+    'depth Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'roll Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'roll Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
+    'roll Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'pitch Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'pitch Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
+    'pitch Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'yaw Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'yaw Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
+    'yaw Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
 }
 # can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
 create_control_panel("verti PID", values)
@@ -104,7 +104,7 @@ class PIDNode(Node):
         self.yaw_pid = PIDController(Kp=values['yaw Kp'].value, Ki=values['yaw Ki'].value, Kd=values['yaw Kd'].value)
 
         # Time passed between each orientation correction (in seconds)
-        self.ori_freq = 2.0
+        self.ori_freq = 0.05
 
 
         ############################################################################
@@ -121,7 +121,7 @@ class PIDNode(Node):
         we will continuously control for depth
         and every self.ori_freq seconds, we will make a correction for orientation
         '''
-        # self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation) #! to uncomment
+        self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation) #! to uncomment
 
     def imu_callback(self, msg):
         self.current_roll = msg.roll
@@ -156,7 +156,7 @@ class PIDNode(Node):
         print("control depth called")
         pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
         translation = [0, 0, pid_output]
-        translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
+        # translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
         thruster_pwm = self.thrustAllocator.getTranslationPwm(translation)
         # thruster_pwm= [
         #     values["0 pwm"].value, 

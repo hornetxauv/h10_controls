@@ -126,11 +126,12 @@ class PIDNode(Node):
     def imu_callback(self, msg):
         self.current_roll = msg.roll
         self.current_pitch = msg.pitch
-        # self.current_yaw = msg.yaw #yaw is depth for now bcos joel made a mistake
-        self.current_depth = msg.yaw
+        self.current_yaw = msg.yaw
+        # (past) yaw is depth for now bcos joel made a mistake
+        # self.current_depth = msg.yaw
     
     def depth_callback(self, msg):
-        # self.current_depth = msg.data
+        self.current_depth = msg.data
 
         # self.get_logger().info('Depth: "%s"' % self.current_depth)
 
@@ -168,8 +169,6 @@ class PIDNode(Node):
         #     values["6 pwm"].value]
 
         self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
-        # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        # self.get_logger().info(f'dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm) #! to change back
@@ -183,9 +182,7 @@ class PIDNode(Node):
 
         thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
 
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        self.get_logger().info(f'Current Depth: {self.current_depth}')
-        self.get_logger().info(f'(R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw})')
+        self.get_logger().info(f'Curr Depth: {self.current_depth} Thruster PWM: {thruster_pwm} (R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw})')
 
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 

@@ -1,5 +1,6 @@
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
+from .pid_controller import PIDController
 from msg_types.msg import IMU
 import time
 import rclpy
@@ -16,46 +17,23 @@ values = {
     # '4 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
     # '5 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
     # '6 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-
-    'desired_depth': CPI(value=1, maximum=2, minimum=0, multiplier=0.01)
-    'depth Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'depth Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
-    'depth Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'roll Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'roll Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
-    'roll Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'pitch Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'pitch Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
-    'pitch Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'yaw Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
-    'yaw Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
-    'yaw Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
+    'multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'desired_depth': CPI(value=1.0, maximum=2, minimum=0, multiplier=10),
+    'depth Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'roll Kp': CPI(value=0.05, maximum=1, minimum=0, multiplier=100),
+    'roll Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'roll Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
+    'pitch Kp': CPI(value=0.05, maximum=1, minimum=0, multiplier=100),
+    'pitch Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'pitch Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
+    'yaw Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'yaw Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'yaw Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
 }
 # can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
 create_control_panel("verti PID", values)
-
-class PIDController:
-    def __init__(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.previous_error = 0
-        self.integral = 0
-
-    def compute(self, setpoint, current_value, dt):
-        error = setpoint - current_value
-        self.integral += error * dt
-        derivative = (error - self.previous_error) / dt if dt > 0 else 0
-        self.previous_error = error
-
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        return output
-    
-    def update_consts(self, new_Kp, new_Ki, new_Kd):
-        self.Kp = new_Kp
-        self.Ki = new_Ki
-        self.Kd = new_Kd
-    
 
 class PIDNode(Node):
     def __init__(self):
@@ -89,7 +67,7 @@ class PIDNode(Node):
         # PID parameters
 
 
-        self.desired_depth = values['desired_depth'].value - 2  # Example depth to maintain
+        self.desired_depth = -values['desired_depth'].value # Example depth to maintain
         self.desired_roll = 0.0    # Example orientation targets
         self.desired_pitch = 0.0
         self.desired_yaw = 0.0
@@ -108,7 +86,7 @@ class PIDNode(Node):
         self.yaw_pid = PIDController(Kp=values['yaw Kp'].value, Ki=values['yaw Ki'].value, Kd=values['yaw Kd'].value)
 
         # Time passed between each orientation correction (in seconds)
-        self.ori_freq = 0.05
+        self.ori_freq = 0.01
 
 
         ############################################################################
@@ -119,20 +97,32 @@ class PIDNode(Node):
         self.thrustAllocator = ThrustAllocator()
         self.thrusterControl = ThrusterControl()   
         self.last_time = None
+        self.ori_last_time = None
 
         # Timer for orientation control 
         '''
         we will continuously control for depth
         and every self.ori_freq seconds, we will make a correction for orientation
         '''
-        self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation) #! to uncomment
+        # self.orientation_timer = self.create_timer(self.ori_freq, self.control_orientation) #! to uncomment
 
     def imu_callback(self, msg):
         self.current_roll = msg.roll
         self.current_pitch = msg.pitch
         self.current_yaw = msg.yaw
-        # (past) yaw is depth for now bcos joel made a mistake
-        # self.current_depth = msg.yaw
+
+        current_time = self.get_clock().now().to_msg()
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
+
+
+        if self.ori_last_time is None:
+            self.ori_last_time = current_seconds
+            return #dt is still zero, so do not do PID yet
+        
+        dt = current_seconds - self.ori_last_time
+        self.ori_last_time = current_seconds
+
+        self.control_orientation(dt)
     
     def depth_callback(self, msg):
         self.current_depth = msg.data
@@ -162,38 +152,41 @@ class PIDNode(Node):
         
         #these lines are needed because of control panel, once control panel no need, these can be removed
         self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
-        self.desired_depth = values['desired_depth'].value - 2
+        self.desired_depth = -values['desired_depth'].value
 
-        pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
+        pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
         translation = [0, 0, pid_output]
         thruster_pwm = self.thrustAllocator.getTranslationPwm(translation)
 
-        self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
+        # self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm) #! to change back
+        # self.thrusterControl.setThrusters(thrustValues=thruster_pwm) #! to change back
 
         # self.thrusterControl.setThrusters(thrustValues=[140, 140, 140, 140, 140, 140, 140])
 
-    def control_orientation(self):
+    def control_orientation(self, dt):
         print("control orientation called")
 
         #these lines are needed because of control panel, once control panel no need, these can be removed
         self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
-        self.pitch_pid.update_consts(new_Kp=values['pitch Kd'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
-        self.desired_depth = values['desired_depth'].value - 2
+        # self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
+        # self.get_logger().info(self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value))
+        self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
+        self.desired_depth = -values['desired_depth'].value
 
-        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
-        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)
+        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, multiplier=values["multiplier"].value)[0]
+        pitch_output, error, kd, deri = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, multiplier=values["multiplier"].value)
+        # self.get_logger().info(f'pitch output: {pitch_output}, error*Kp: {error}, kd: {kd}, deri: {deri}, dt: {dt}')
+        self.get_logger().info(f'pitch output: {round(pitch_output, 4)}, error: {round(error, 4)} kd: {kd} deri: {round(deri, 4)}')
+        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, multiplier=values["multiplier"].value)[0]
 
         thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
-
-        self.get_logger().info(f'Curr Depth: {self.current_depth} Thruster PWM: {thruster_pwm} (R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw})')
+# PID: {self.roll_pid} 
+        # self.get_logger().info(f'Curr Depth: {self.current_depth} Thruster PWM: {thruster_pwm} (R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw}) roll_output: {roll_output} pitch_output: {pitch_output}')
+        # self.get_logger().info(f'pitch_output: {pitch_output}, pitch error*Kp: {error}, pitch deri: {deri}')
 
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
-
-
 
 def main(args=None):
     rclpy.init(args=args)

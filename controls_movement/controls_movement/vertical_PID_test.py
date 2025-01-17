@@ -19,7 +19,7 @@ values = {
     # '6 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
     'multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
     'desired_depth': CPI(value=1.0, maximum=2, minimum=0, multiplier=10),
-    'depth Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    'depth Kp': CPI(value=0, maximum=20, minimum=0, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'roll Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
@@ -128,7 +128,7 @@ class PIDNode(Node):
     
     def depth_callback(self, msg):
         self.current_depth = msg.data
-        self.get_logger().info(f'depth: {self.current_depth}')
+        # self.get_logger().info(f'depth: {self.current_depth}')
 
         # self.get_logger().info('Depth: "%s"' % self.current_depth)
 
@@ -172,7 +172,7 @@ class PIDNode(Node):
 
         self.depth_pwm = [foo(i) for i in thruster_pwm]
 
-        self.get_logger().info(f'{pid_output} {thruster_pwm} {str(self.depth_pwm)}')
+        self.get_logger().info(f'{pid_output} {thruster_pwm}')# {str(self.depth_pwm)}')
 
         # self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
 

@@ -90,6 +90,9 @@ class PIDNode(Node):
         # Time passed between each orientation correction (in seconds)
         self.ori_freq = 0.01
 
+        self.translation = [0, 0, 0]
+        self.rotation = [0, 0, 0]
+
 
         ############################################################################
         ############################################################################
@@ -125,6 +128,7 @@ class PIDNode(Node):
         self.ori_last_time = current_seconds
 
         self.control_orientation(dt)
+        self.depth_ori_control()
     
     def depth_callback(self, msg):
         self.current_depth = msg.data
@@ -148,6 +152,7 @@ class PIDNode(Node):
         self.last_time = current_seconds
 
         self.control_depth(dt)
+        self.depth_ori_control()
 
     def control_depth(self, dt):
         # Compute PID output
@@ -159,20 +164,7 @@ class PIDNode(Node):
 
         pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
         translation = [0, 0, pid_output]
-        # return translation
-        thruster_pwm = self.thrustAllocator.getTranslationPwm(translation)
-
-        def foo(pwm):
-            if pwm < 118 or pwm > 136:
-                return pwm-118
-            else:
-                return 0
-
-        # self.depth_pwm = [(i-136 if i > 118 else 118-i) for i in thruster_pwm]
-
-        self.depth_pwm = [foo(i) for i in thruster_pwm]
-
-        self.get_logger().info(f'{pid_output} {thruster_pwm} {str(self.depth_pwm)}')
+        self.translation = translation
 
         # self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
 
@@ -197,14 +189,14 @@ class PIDNode(Node):
         # self.get_logger().info(f'pitch output: {round(pitch_output, 4)}, error: {round(error, 4)} kd: {kd} deri: {round(deri, 4)}')
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, multiplier=values["multiplier"].value)[0]
 
-        thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
 # PID: {self.roll_pid} 
         # self.get_logger().info(f'Curr Depth: {self.current_depth} Thruster PWM: {thruster_pwm} (R, P, Y) = ({self.current_roll}, {self.current_pitch}, {self.current_yaw}) roll_output: {roll_output} pitch_output: {pitch_output}')
         # self.get_logger().info(f'pitch_output: {pitch_output}, pitch error*Kp: {error}, pitch deri: {deri}')
-
-        combined_pwm = [thruster_pwm[i] + p for i, p in enumerate(self.depth_pwm)]
-
-        self.thrusterControl.setThrusters(thrustValues=combined_pwm)
+        self.rotation = [roll_output, pitch_output, yaw_output]
+    
+    def depth_ori_control(self):
+        thrustPWMs = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
+        self.thrusterControl.setThrusters(thrustPWMs)
 
 def main(args=None):
     rclpy.init(args=args)

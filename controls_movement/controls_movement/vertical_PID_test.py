@@ -52,6 +52,11 @@ class PIDController:
         output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         return output
     
+    def update_consts(self, new_Kp, new_Ki, new_Kd):
+        self.Kp = new_Kp
+        self.Ki = new_Ki
+        self.Kd = new_Kd
+    
 
 class PIDNode(Node):
     def __init__(self):
@@ -155,6 +160,10 @@ class PIDNode(Node):
     def control_depth(self, dt):
         # Compute PID output
         print("control depth called")
+        
+        #need to continuously update the PID constants, can be removed once the constants are solidified
+        self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
+        
         pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
         translation = [0, 0, pid_output]
         # translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
@@ -176,6 +185,11 @@ class PIDNode(Node):
 
     def control_orientation(self):
         print("control orientation called")
+
+        #need to continuously update the PID constants, can be removed once the constants are solidified
+        self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
+        self.pitch_pid.update_consts(new_Kp=values['pitch Kd'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
+
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)

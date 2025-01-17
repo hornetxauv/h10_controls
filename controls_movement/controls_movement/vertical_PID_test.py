@@ -16,9 +16,8 @@ values = {
     # '4 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
     # '5 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
     # '6 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    'x': CPI(value=20, maximum=40, minimum=0, multiplier=1),
-    'y': CPI(value=20, maximum=40, minimum=0, multiplier=1),
-    'z': CPI(value=20, maximum=40, minimum=0, multiplier=1),
+
+    'desired_depth': CPI(value=1, maximum=2, minimum=0, multiplier=0.01)
     'depth Kp': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0.01, multiplier=100),
     'depth Kd': CPI(value=0, maximum=10, minimum=0.1, multiplier=10),
@@ -90,7 +89,7 @@ class PIDNode(Node):
         # PID parameters
 
 
-        self.desired_depth = 10.0  # Example depth to maintain
+        self.desired_depth = values['desired_depth'].value - 2  # Example depth to maintain
         self.desired_roll = 0.0    # Example orientation targets
         self.desired_pitch = 0.0
         self.desired_yaw = 0.0
@@ -161,34 +160,28 @@ class PIDNode(Node):
         # Compute PID output
         print("control depth called")
         
-        #need to continuously update the PID constants, can be removed once the constants are solidified
+        #these lines are needed because of control panel, once control panel no need, these can be removed
         self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
-        
+        self.desired_depth = values['desired_depth'].value - 2
+
         pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt)
         translation = [0, 0, pid_output]
-        # translation = [values["x"].value-20, values["y"].value-20, values["z"].value-20]
         thruster_pwm = self.thrustAllocator.getTranslationPwm(translation)
-        # thruster_pwm= [
-        #     values["0 pwm"].value, 
-        #     values["1 pwm"].value, 
-        #     values["2 pwm"].value, 
-        #     values["3 pwm"].value, 
-        #     values["4 pwm"].value, 
-        #     values["5 pwm"].value, 
-        #     values["6 pwm"].value]
 
         self.get_logger().info(f'Depth: {self.current_depth} Thruster PWM Output: {thruster_pwm} dt: {dt}')
 
         # set thruster values to the computed pwm values from ThrustAllocator
         self.thrusterControl.setThrusters(thrustValues=thruster_pwm) #! to change back
+
         # self.thrusterControl.setThrusters(thrustValues=[140, 140, 140, 140, 140, 140, 140])
 
     def control_orientation(self):
         print("control orientation called")
 
-        #need to continuously update the PID constants, can be removed once the constants are solidified
+        #these lines are needed because of control panel, once control panel no need, these can be removed
         self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
         self.pitch_pid.update_consts(new_Kp=values['pitch Kd'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
+        self.desired_depth = values['desired_depth'].value - 2
 
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)

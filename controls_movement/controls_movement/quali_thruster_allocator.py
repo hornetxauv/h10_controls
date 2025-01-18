@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from msg_types.msg import Controls
 from custom_msgs.msg import GateDetection
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
@@ -60,17 +61,21 @@ class PIDNode(Node):
             self.error_callback,
             10
         )
+
+        self.publisher = self.node.create_publisher(Controls, "/controls/wanted_movement", 10)
+
+        self.movement_message = Controls()
         
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
-        self.z_error = 0.0
+        # self.z_error = 0.0
 
         ############################################################################
         ############################################################################
         # PID parameters
 
         self.x_PID = PIDController(Kp=values['x Kp'].value, Ki=values['x Ki'].value, Kd=values['x Kd'].value)
-        self.z_PID = PIDController(Kp=values['z Kp'].value, Ki=values['z Ki'].value, Kd=values['z Kd'].value)
+        # self.z_PID = PIDController(Kp=values['z Kp'].value, Ki=values['z Ki'].value, Kd=values['z Kd'].value)
 
         ############################################################################
         ############################################################################
@@ -84,9 +89,10 @@ class PIDNode(Node):
 
     def error_callback(self, msg):
         x_error = msg.dx 
-        z_error = msg.dy
+        # z_error = msg.dy # Note: removed due to using depth sensor
         width = msg.width
-        self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {width}')
+        # self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {width}')
+        self.get_logger().info(f'x_error: {x_error}, distance: {width}')
 
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
@@ -100,25 +106,33 @@ class PIDNode(Node):
         self.last_time = current_seconds
 
         x_output = 0.0
-        z_output = 0.0
+        # z_output = 0.0
         y_output = 0.0
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if width != 0:
             x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
-            z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
+            # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
-        #attempt to set constant z_output to keep the AUV neutrally buoyant
-        z_output += values['z offset'].value
+        self.movement_message.translation = [x_output, y_output, 0]
+        self.publish()
 
-        thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
+        # #attempt to set constant z_output to keep the AUV neutrally buoyant
+        # z_output += values['z offset'].value
 
-        # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
-        # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        self.get_logger().info(f"{values['x Kp'].value} {values['x Ki'].value} {values['x Kd'].value}")
+        # thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
+
+        # # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
+        # # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+        # self.get_logger().info(f"{values['x Kp'].value} {values['x Ki'].value} {values['x Kd'].value}")
         
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        # self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+
+    def publish(self):
+        if self.movement_message is not None:
+            self.publisher.publish(self.movement_message)
+            self.get_logger().info(f"Published Translation: ${self.movement_message.translation} and Rotation ${self.movement_message.rotation}")
 
 
 def main(args=None):

@@ -1,3 +1,5 @@
+#test if I can commit and push using my Linux dual boot
+
 #!/usr/bin/env python3
 import numpy as np
 import rclpy

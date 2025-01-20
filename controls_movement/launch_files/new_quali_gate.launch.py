@@ -20,9 +20,10 @@ def generate_launch_description():
     # change this line to move different direction
     #TODO make it a parameter
     ld = [
-        Node(package="quali_gate_detector", executable="detector"),
-        Node(package="quali_gate_detector", executable="detector_listener"),
-        Node(package="controls_movement", executable="qualiGate"),
+        # Node(package="quali_gate_detector", executable="detector"),
+        Node(package="can_handler", executable="can_handler"),
+        # Node(package="quali_gate_detector", executable="detector_listener"),
+        # Node(package="controls_movement", executable="qualiGate"),
         Node(package="controls_movement", executable="depthOriPID"),
         Node(package="controls_movement", executable="movementControls")
         # Node(package="controls_movement", executable="qualiGate_pub"),

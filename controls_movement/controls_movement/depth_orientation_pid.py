@@ -1,11 +1,12 @@
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-from ..pid_controller import PIDController
+from .pid_controller import PIDController
 from msg_types.msg import DepthIMU, Controls
 import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
+from geometry_msgs.msg import Vector3
 from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
 
 values = {
@@ -44,7 +45,7 @@ class DepthOriPIDNode(Node):
             10
         )
 
-        self.publisher = self.node.create_publisher(Controls, "/controls/wanted_depth_ori", 10)
+        self.publisher = self.create_publisher(Controls, "/controls/wanted_depth_ori", 10)
 
         # Latest sensor readings
         self.current_depth = 0.0
@@ -85,13 +86,17 @@ class DepthOriPIDNode(Node):
         if self.ori_last_time is None:
             self.ori_last_time = current_seconds
             return #dt is still zero, so do not do PID yet
+
+        # self.get_logger().info("Here")
         
         dt = current_seconds - self.ori_last_time
         self.ori_last_time = current_seconds
+        self.depth_ori_control(dt)
 
-        self.control_depth(dt)
-        self.control_orientation(dt)
-        self.depth_ori_control()
+    def assign_vector(self, vector, values):
+        vector.x = values[0]
+        vector.y = values[1]
+        vector.z = values[2]
 
     def depth_ori_control(self, dt):
         #these lines are needed because of control panel, once control panel no need, these can be removed
@@ -106,8 +111,11 @@ class DepthOriPIDNode(Node):
         depth_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
         roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, multiplier=values["multiplier"].value)[0]
         pitch_output, error, kd, deri = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, multiplier=values["multiplier"].value)
-        self.controls_message.translation = [0, 0, depth_output]
-        self.controls_message.rotation = [roll_output, pitch_output, 0]
+        
+        self.assign_vector(self.controls_message.translation, [0.0, 0.0, depth_output])
+        self.assign_vector(self.controls_message.rotation, [roll_output, pitch_output, 0.0])
+
+        # self.get_logger().info(f"LOG Translation: ${self.controls_message.translation} and Rotation ${self.controls_message.rotation}")
 
         self.publish()
 

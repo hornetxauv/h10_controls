@@ -10,8 +10,8 @@ from control_panel.control_panel import create_control_panel, ControlPanelItem a
 
 values = {
     'multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'desired_depth': CPI(value=1.0, maximum=2, minimum=0, multiplier=10),
-    'depth Kp': CPI(value=0, maximum=20, minimum=0, multiplier=10),
+    'desired_depth': CPI(value=1.0, maximum=4, minimum=0, multiplier=10),
+    'depth Kp': CPI(value=0, maximum=50, minimum=0, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'roll Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
@@ -33,7 +33,7 @@ class PIDNode(Node):
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
-            Float32,
+            DepthIMU,
             '/sensors/depth_imu',
             self.drpy_callback,
             10
@@ -83,7 +83,7 @@ class PIDNode(Node):
 
 
     def drpy_callback(self, msg):
-        self.current_depth = msg.data
+        self.current_depth = -msg.depth
         self.current_roll = msg.roll
         self.current_pitch = msg.pitch
         self.current_yaw = msg.yaw
@@ -105,10 +105,10 @@ class PIDNode(Node):
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
-        self.desired_depth = -values['desired_depth'].value
+        self.desired_depth = -(values['desired_depth'].value-2)
         self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
         self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
-        self.desired_depth = -values['desired_depth'].value
+        # self.desired_depth = -values['desired_depth'].value
 
         depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
         translation = [0, 0, depth_pid_output]
@@ -120,6 +120,10 @@ class PIDNode(Node):
         rotation = [roll_output, pitch_output, yaw_output]
 
         thrustPWMs = self.thrustAllocator.getThrustPwm(translation, rotation)
+
+        goingUp = (self.desired_depth
+
+        self.get_logger().info(f"thrustPWMs: {thrustPWMs}, desired_depth: {self.desired_depth}, current_depth:{self.current_depth}")
         self.thrusterControl.setThrusters(thrustPWMs)
 
 

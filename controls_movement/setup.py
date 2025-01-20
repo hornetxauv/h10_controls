@@ -42,7 +42,7 @@ setup(
             "dirTest = controls_movement.simple_direction_test:main",
 
             "depthOriPID = controls_movement.depth_orientation_pid:main",
-            "movementControls = movement_controller:main",
+            "movementControls = controls_movement.movement_controller:main",
 
             "sensorViewer = controls_movement.sensor_viewer:main",
         ],

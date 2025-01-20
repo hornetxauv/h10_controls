@@ -62,7 +62,7 @@ class PIDNode(Node):
             10
         )
 
-        self.publisher = self.node.create_publisher(Controls, "/controls/wanted_movement", 10)
+        self.publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
 
         self.movement_message = Controls()
         

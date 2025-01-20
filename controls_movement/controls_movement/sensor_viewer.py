@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from msg_types.msg import IMU
+from msg_types.msg import DepthIMU
 import cv2
 import numpy as np
 from collections import deque
@@ -9,39 +9,44 @@ class IMUPlotter(Node):
     def __init__(self):
         super().__init__('imu_plotter')
         self.subscription = self.create_subscription(
-            IMU,
-            '/sensors/imu',
+            DepthIMU,
+            '/sensors/depth_imu',
             self.imu_callback,
             10)
         
-        self.roll_values = deque(maxlen=100)  # Limit history to 100 points
-        self.pitch_values = deque(maxlen=100)
+        self.roll_values = deque(maxlen=300)  # Limit history to 100 points
+        self.pitch_values = deque(maxlen=300)
+        self.yaw_values = deque(maxlen=300)
         self.time_values = np.linspace(-10, 0, 100)  # Display last 10 seconds (example)
 
-        self.window_name = 'Roll and Pitch Plot'
+        self.window_name = 'Roll and Pitch and Yaw Plot'
         cv2.namedWindow(self.window_name)
 
     def imu_callback(self, msg):
         roll = msg.roll
         pitch = msg.pitch
-        self.get_logger().info(f'Received roll: {roll:.2f}, pitch: {pitch:.2f}')
+        yaw = msg.yaw
+        self.get_logger().info(f'Received roll: {roll:.2f}, pitch: {pitch:.2f}, yaw: {yaw:.2f}')
         
         self.roll_values.append(roll)
         self.pitch_values.append(pitch)
+        self.yaw_values.append(pitch)
         
-        self.plot_roll_pitch()
+        self.plot_roll_yaw_pitch()
 
-    def plot_roll_pitch(self):
+    def plot_roll_yaw_pitch(self):
         plot_height, plot_width = 400, 600
         plot_image = np.zeros((plot_height, plot_width, 3), dtype=np.uint8)
 
         max_angle = 90  # Assuming pitch and roll range is -90 to 90
         roll_scaled = [(r / max_angle) * (plot_height // 2) + plot_height // 2 for r in self.roll_values]
         pitch_scaled = [(p / max_angle) * (plot_height // 2) + plot_height // 2 for p in self.pitch_values]
+        yaw_scaled = [(yw / max_angle) * (plot_height // 2) + plot_height // 2 for yw in self.yaw_values]
 
         for i in range(1, len(roll_scaled)):
             cv2.line(plot_image, (i-1, int(roll_scaled[i-1])), (i, int(roll_scaled[i])), (255, 0, 0), 2)  # Roll in blue
             cv2.line(plot_image, (i-1, int(pitch_scaled[i-1])), (i, int(pitch_scaled[i])), (0, 255, 0), 2)  # Pitch in green
+            cv2.line(plot_image, (i-1, int(yaw_scaled[i-1])), (i, int(yaw_scaled[i])), (0, 0, 255), 2)  # Pitch in RED
 
         # Draw time and angle axes
         for y in range(0, plot_height, 50):

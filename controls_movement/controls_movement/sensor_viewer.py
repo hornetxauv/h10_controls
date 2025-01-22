@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from msg_types.msg import IMU
+from msg_types.msg import DepthIMU
 import cv2
 import numpy as np
 from collections import deque
@@ -11,20 +11,12 @@ class IMUPlotter(Node):
         
         self.dashboard_sections = {
             'IMU Data': {
-                'topic_type': IMU,
-                'topic_name': '/sensors/imu',
-                'display_values': ['roll,pitch,yaw'],
+                'topic_type': DepthIMU,
+                'topic_name': '/sensors/depth_imu',
+                'display_values': ['depth,roll,pitch,yaw'],
                 'color': (255, 255, 0),
                 'x_pos': 20,
-                'data': {'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
-            },
-            'Depth Data': {
-                'topic_type': None,
-                'topic_name': '/depth',
-                'display_values': ['current_depth,desired_depth'],
-                'color': (0, 255, 255),
-                'x_pos': 300,
-                'data': {'current_depth': 0.0, 'desired_depth': 0.0}
+                'data': {'depth':0.0,'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
             },
             'Thrust PWMs': {
                 'topic_type': None,
@@ -43,6 +35,7 @@ class IMUPlotter(Node):
         self.roll_points = np.zeros(self.plot_points)
         self.pitch_points = np.zeros(self.plot_points)
         self.yaw_points = np.zeros(self.plot_points)
+        self.depth_points = np.zeros(self.plot_points)
         self.x_points = np.linspace(0, self.plot_width, self.plot_points)
         self.time_values = np.linspace(-10, 0, self.plot_points)
 
@@ -97,10 +90,12 @@ class IMUPlotter(Node):
         self.roll_points = np.roll(self.roll_points, -1)
         self.pitch_points = np.roll(self.pitch_points, -1)
         self.yaw_points = np.roll(self.yaw_points, -1)
+        self.depth_points = np.roll(self.depth_points, -1)
         
         self.roll_points[-1] = msg.roll
         self.pitch_points[-1] = msg.pitch
         self.yaw_points[-1] = msg.yaw
+        self.depth_points[-1] = msg.depth
         
         self.plot_roll_yaw_pitch()
 
@@ -117,7 +112,7 @@ class IMUPlotter(Node):
 
         roll_scaled = np.int32((self.roll_points / max_angle) * (plot_height // 2) + plot_height // 2)
         pitch_scaled = np.int32((self.pitch_points / max_angle) * (plot_height // 2) + plot_height // 2)
-        yaw_scaled = np.int32((self.yaw_points / max_angle) * (plot_height // 2) + plot_height // 2)
+        depth_scaled = np.int32((self.depth_points / 1) * (plot_height // 2) + plot_height // 2)
 
         for i in range(1, len(self.x_points)):
             cv2.line(plot_image, 
@@ -131,8 +126,8 @@ class IMUPlotter(Node):
                     (0, 255, 0), 2)
             
             cv2.line(plot_image,
-                    (int(self.x_points[i-1]), yaw_scaled[i-1]),
-                    (int(self.x_points[i]), yaw_scaled[i]),
+                    (int(self.x_points[i-1]), depth_scaled[i-1]),
+                    (int(self.x_points[i]), depth_scaled[i]),
                     (0, 0, 255), 2)
 
         for y in range(0, plot_height, 50):
@@ -152,7 +147,7 @@ class IMUPlotter(Node):
                    (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
         cv2.putText(plot_image, f'Pitch: {self.pitch_points[-1]:.2f}°',
                    (170, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-        cv2.putText(plot_image, f'Yaw: {self.yaw_points[-1]:.2f}°',
+        cv2.putText(plot_image, f'Depth: {self.depth_points[-1]:.2f}°',
                    (330, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         cv2.imshow(self.plot_window, plot_image)

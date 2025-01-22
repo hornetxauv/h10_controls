@@ -84,8 +84,8 @@ class PIDNode(Node):
 
     def drpy_callback(self, msg):
         self.current_depth = -msg.depth
-        self.current_roll = msg.roll
-        self.current_pitch = msg.pitch
+        self.current_roll = msg.yaw
+        self.current_pitch = msg.yaw
         self.current_yaw = msg.yaw
 
         current_time = self.get_clock().now().to_msg()
@@ -121,9 +121,16 @@ class PIDNode(Node):
 
         thrustPWMs = self.thrustAllocator.getThrustPwm(translation, rotation)
 
-        goingUp = (self.desired_depth
+        # debugging helpers
+        correctDir = ("up" if self.desired_depth > self.current_depth else "down")
+        outputDir = ("up" if depth_pid_output > 0 else "down")
+        rotationOutput = ["+ve" if rot > 0 else "-ve" for rot in rotation]
 
-        self.get_logger().info(f"thrustPWMs: {thrustPWMs}, desired_depth: {self.desired_depth}, current_depth:{self.current_depth}")
+        #self.get_logger().info(f"thrustPWMs: {thrustPWMs},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth}")
+        self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw}")
+
+
+
         self.thrusterControl.setThrusters(thrustPWMs)
 
 

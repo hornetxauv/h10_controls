@@ -9,8 +9,11 @@ from std_msgs.msg import Int32MultiArray, Float32
 from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
 
 values = {
-    'multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'desired_depth': CPI(value=1.0, maximum=4, minimum=0, multiplier=10),
+    'depth_kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'depth_ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'desired_depth': CPI(value=1.0, maximum=200, minimum=0, multiplier=1),
     'depth Kp': CPI(value=0, maximum=50, minimum=0, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
@@ -84,8 +87,8 @@ class PIDNode(Node):
 
     def drpy_callback(self, msg):
         self.current_depth = -msg.depth
-        self.current_roll = msg.yaw
-        self.current_pitch = msg.yaw
+        self.current_roll = msg.roll
+        self.current_pitch = msg.pitch
         self.current_yaw = msg.yaw
 
         current_time = self.get_clock().now().to_msg()
@@ -105,17 +108,17 @@ class PIDNode(Node):
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
-        self.desired_depth = -(values['desired_depth'].value-2)
+        self.desired_depth = -(values['desired_depth'].value)/100
         self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
         self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
         # self.desired_depth = -values['desired_depth'].value
 
-        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
-        translation = [0, 0, depth_pid_output]
+        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=values["depth_kd_multiplier"].value, ki_multiplier=values["depth_ki_multiplier"].value)[0]
+        translation = [0, 0, -100*depth_pid_output]
 
-        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, multiplier=values["multiplier"].value)[0]
-        pitch_output, error, kd, deri = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, multiplier=values["multiplier"].value)
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, multiplier=values["multiplier"].value)[0]
+        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)
+        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
+        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
 
         rotation = [roll_output, pitch_output, yaw_output]
 
@@ -126,8 +129,8 @@ class PIDNode(Node):
         outputDir = ("up" if depth_pid_output > 0 else "down")
         rotationOutput = ["+ve" if rot > 0 else "-ve" for rot in rotation]
 
-        #self.get_logger().info(f"thrustPWMs: {thrustPWMs},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth}")
-        self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw}")
+        self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth}")
+        # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
 
 
 

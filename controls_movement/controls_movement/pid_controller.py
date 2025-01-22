@@ -6,15 +6,15 @@ class PIDController:
         self.previous_error = None
         self.integral = 0
 
-    def compute(self, setpoint, current_value, dt, multiplier):
+    def compute(self, setpoint, current_value, dt, kd_multiplier, ki_multiplier):
         error = setpoint - current_value
-        self.integral += error * dt / (10**multiplier)
-        derivative = (error - self.previous_error) / dt / (10**multiplier) if dt > 0 and self.previous_error is not None else 0.0
+        self.integral = (self.integral*0.95) + error * dt / (10**ki_multiplier)
+        derivative = (error - self.previous_error) / dt / (10**kd_multiplier) if dt > 0 and self.previous_error is not None else 0.0
         self.previous_error = error
 
-        output = self.Kp * error + self.Ki * self.integral - self.Kd * derivative
+        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
         # return (output, self.Kp * error, self.Kd, derivative, dt)
-        return (output, self.Kp * error, self.Kd, self.Kd * derivative)
+        return (output, self.Ki * self.integral, self.Kd, self.Kd * derivative)
     
     def update_consts(self, new_Kp, new_Ki, new_Kd):
         self.Kp = new_Kp

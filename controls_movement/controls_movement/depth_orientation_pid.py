@@ -8,19 +8,13 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
 from geometry_msgs.msg import Vector3
 from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
-
 values = {
-    # 'z offset': CPI(value=1.0, maximum=50, minimum=0.1, multiplier=10),
-    # '0 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '1 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '2 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '3 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '4 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '5 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    # '6 pwm': CPI(value=140, maximum=250, minimum=0, multiplier=1),
-    'multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'desired_depth': CPI(value=1.0, maximum=2, minimum=0, multiplier=10),
-    'depth Kp': CPI(value=0, maximum=20, minimum=0, multiplier=10),
+    'depth_kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'depth_ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'desired_depth': CPI(value=1.0, maximum=200, minimum=0, multiplier=1),
+    'depth Kp': CPI(value=0, maximum=50, minimum=0, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'roll Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
@@ -28,7 +22,10 @@ values = {
     'roll Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
     'pitch Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
     'pitch Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'pitch Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100)
+    'pitch Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
+    # 'yaw Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    # 'yaw Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
+    # 'yaw Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
 }
 # can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
 create_control_panel("Depth Orientation PID", values)
@@ -108,10 +105,13 @@ class DepthOriPIDNode(Node):
         self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
         self.desired_depth = -values['desired_depth'].value
 
-        depth_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, multiplier=values["multiplier"].value)[0]
-        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, multiplier=values["multiplier"].value)[0]
-        pitch_output, error, kd, deri = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, multiplier=values["multiplier"].value)
-        
+        depth_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=values["depth_kd_multiplier"].value, ki_multiplier=values["depth_ki_multiplier"].value)[0]
+        translation = [0, 0, -100*depth_output]
+
+        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)
+        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
+        # yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
+
         self.assign_vector(self.controls_message.translation, [0.0, 0.0, depth_output])
         self.assign_vector(self.controls_message.rotation, [roll_output, pitch_output, 0.0])
 

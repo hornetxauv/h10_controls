@@ -58,7 +58,7 @@ class MovementControllerNode(Node):
         self.translation = np.add(self.depth_translation, self.goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor
         self.rotation = np.add(self.depth_rotation, self.goal_rotation) # assuming goal only has a yaw
         self.get_logger().info(f"COMPUTED Translation: {self.translation} Rotation: {self.rotation}")
-        thrustPWMs = self.thrustAllocator.getRotationwm(self.rotation.toList())
+        thrustPWMs = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         self.thrusterControl.setThrusters(thrustPWMs)
 
 def main(args=None):

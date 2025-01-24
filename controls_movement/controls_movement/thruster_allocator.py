@@ -4,11 +4,23 @@ from scipy import optimize
 from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
 
 values = {
-    '1': CPI(value=10, maximum=50),
-    '2': CPI(value=14, maximum=50),
-    '3': CPI(value=10, maximum=50),
+    'FL': CPI(value=100, maximum=200),
+    'FR': CPI(value=100, maximum=200),
+    'RL': CPI(value=100, maximum=200),
+    'RR': CPI(value=100, maximum=200),
+    'ML': CPI(value=100, maximum=200),
+    'MR': CPI(value=100, maximum=200),
+    'MM': CPI(value=100, maximum=200),
 }
-# create_control_panel("thruster biases", values, no_new_thread=True)
+# create_control_panel("thruster biases", values)
+
+thruster_biases = np.array([values['FL'].value/100,   # Front Left
+                    values['FR'].value/100,    # Front Right
+                    values['RL'].value/100,    # Rear Left
+                    values['RR'].value/100,   # Rear Right
+                    values['ML'].value/100,    # Middle Left
+                    values['MR'].value/100,    # Middle Right
+                    values['MM'].value/100,]) # Middle Middle
 
 '''
 Thruster positions are relative to the CG of the hull
@@ -85,14 +97,6 @@ thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1
 )
 
-thruster_biases = np.array([1.0,    # Front Left
-                            1.0,    # Front Right
-                            1.0,    # Rear Left
-                            1.0,    # Rear Right
-                            values['1'].value/10,    # Middle Left
-                            values['2'].value/10,    # Middle Right
-                            values['3'].value/10,])  # Middle Middle
-
 
 thrust_map = pd.read_csv("./src/controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values
 #thrust_map = pd.read_csv("./thrust_map.csv", sep=',', header=None).values
@@ -141,7 +145,16 @@ class ThrustAllocator:
     
     def thrustToPwm(self, thrust_forces):
         pwm = []
-        for force in thrust_forces:
+        thruster_biases = np.array([values['FL'].value/100,   # Front Left
+                    values['FR'].value/100,    # Front Right
+                    values['RL'].value/100,    # Rear Left
+                    values['RR'].value/100,   # Rear Right
+                    values['ML'].value/100,    # Middle Left
+                    values['MR'].value/100,    # Middle Right
+                    values['MM'].value/100,]) # Middle Middle
+        for force, bias in zip(thrust_forces, thruster_biases):
+            force *= bias
+            print(f"bias {bias} force:{force}")
             idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
             pwm.append(self.thrust_map[idx][1].astype(int))
         

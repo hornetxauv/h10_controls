@@ -8,7 +8,8 @@ class PIDController:
 
     def compute(self, setpoint, current_value, dt, kd_multiplier, ki_multiplier):
         error = setpoint - current_value
-        self.integral = (self.integral*0.95) + error * dt / (10**ki_multiplier)
+        self.integral = (self.integral) + error * dt / (10**(ki_multiplier-2))
+        # self.integral = max(-3/1.1, min(3/1.1, self.integral))
         derivative = (error - self.previous_error) / dt / (10**kd_multiplier) if dt > 0 and self.previous_error is not None else 0.0
         self.previous_error = error
 

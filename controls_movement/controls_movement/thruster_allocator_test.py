@@ -5,56 +5,77 @@ Otherwise, [Errno 2] No such file or directory for thrust_map.csv
 izen@Izen-Pavillion:~/HornetXAuv_ws$ python3 ./src/h10_controls/controls_movement/controls_movement/thruster_allocator_test.py
 
 """
-
+import rclpy
+from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
 import numpy as np
-from thruster_allocator import ThrustAllocator, thruster_names, thrust_map
+from controls_movement.thruster_allocator import ThrustAllocator, thruster_names
+import time
 
-def test_thruster_matrix(t):
+def test_thruster_matrix(self, t):
     for i in range(7):
         s = thruster_names[i] + "\t"
         for j in range(6):
             s += " " + str(t.parameters[j][i])
     
-        print(s)
+        self.get_logger().info(s)
 
-def test_translation(t):
+def test_translation(self, t):
     ''' Test translation '''
-    vfunc = pwm_to_thrust()
-    print("+X translation: ", vfunc(t.getTranslationPwm([10, 0, 0]))) # Translation in x-axis
-    print("+Y translation: ", vfunc(t.getTranslationPwm([0, 10, 0]))) # Translation in y-axis
-    print("+Z translation: ", vfunc(t.getTranslationPwm([0, 0, 10]))) # Translation in z-axis
+    vfunc = pwm_to_thrust(t)
+    self.get_logger().info(f"+X translation: {vfunc(t.getTranslationPwm([10, 0, 0]))}") # Translation in x-axis
+    self.get_logger().info(f"+Y translation: {vfunc(t.getTranslationPwm([0, 10, 0]))}") # Translation in y-axis
+    self.get_logger().info(f"+Z translation: {vfunc(t.getTranslationPwm([0, 0, 10]))}") # Translation in z-axis
 
-def test_rotation(t):
+def test_rotation(self, t):
     ''' Test rotation'''
-    vfunc = pwm_to_thrust()
-    print("+Roll rotation: ", vfunc(t.getRotationPwm([10, 0, 0]))) # Roll right
-    print("-Roll rotation: ", vfunc(t.getRotationPwm([-10, 0, 0]))) # Roll left
-    print("+Pitch rotation: ", vfunc(t.getRotationPwm([0, 10, 0]))) # Pitch up
-    print("-Pitch rotation: ", vfunc(t.getRotationPwm([0, -10, 0]))) # Pitch down
-    print("+Yaw rotation: ", vfunc(t.getRotationPwm([0, 0, 10]))) # Yaw left 
-    print("-Yaw rotation: ", vfunc(t.getRotationPwm([0, 0, -10]))) # Yaw right
+    vfunc = pwm_to_thrust(t)
+    self.get_logger().info(f"+Roll rotation: {vfunc(t.getRotationPwm([10, 0, 0]))}") # Roll right
+    self.get_logger().info(f"-Roll rotation: {vfunc(t.getRotationPwm([-10, 0, 0]))}") # Roll left
+    self.get_logger().info(f"+Pitch rotation: {vfunc(t.getRotationPwm([0, 10, 0]))}") # Pitch up
+    self.get_logger().info(f"-Pitch rotation: {vfunc(t.getRotationPwm([0, -10, 0]))}") # Pitch down
+    self.get_logger().info(f"+Yaw rotation: {vfunc(t.getRotationPwm([0, 0, 10]))}") # Yaw left 
+    self.get_logger().info(f"-Yaw rotation: {vfunc(t.getRotationPwm([0, 0, -10]))}") # Yaw right
 
-def pwm_to_thrust():
+def pwm_to_thrust(t):
     def get_thrust(pwm):
-        idx = np.searchsorted(thrust_map[:, 1], pwm, 'left')
-        return thrust_map[idx][0]
+        idx = np.searchsorted(t.thrust_map[:, 1], pwm, 'left')
+        return t.thrust_map[idx][0]
     
     return np.vectorize(get_thrust)
 
-def main():
-    t = ThrustAllocator()
+class ThrusterAllocatorTest(Node):
+    def __init__(self, thruster_allocator):
+        super().__init__('thruster_test_node')
+        t = thruster_allocator
 
-    print("--- Thruster matrix ---")
-    test_thruster_matrix(t)
-    print("\n\n")
+        self.get_logger().info("--- Thruster matrix ---")
+        test_thruster_matrix(self, t)
+        self.get_logger().info("\n\n")
 
-    print("--- Thruster translation test---")
-    test_translation(t)
-    print("\n\n")
-    
-    print("--- Thruster rotation test ---")
-    test_rotation(t)   
-    print("\n\n")
+        self.get_logger().info("--- Thruster translation test---")
+        test_translation(self, t)
+        self.get_logger().info("\n\n")
+        
+        self.get_logger().info("--- Thruster rotation test ---")
+        test_rotation(self, t)   
+        self.get_logger().info("\n\n")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    thruster_allocator_node = ThrustAllocator()
+    tester = ThrusterAllocatorTest(thruster_allocator_node)
+
+    executor = MultiThreadedExecutor()
+    executor.add_node(thruster_allocator_node)
+    executor.add_node(tester)
+
+    executor.spin()
+
+    thruster_allocator_node.destroy_node()
+    test_node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

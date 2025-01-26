@@ -1,21 +1,10 @@
 import rclpy
 from rclpy.node import Node
-
+from rclpy.executors import MultiThreadedExecutor
+from ament_index_python.packages import get_package_share_directory
+from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   
-
-from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
-
-x=200
-
-values = {
-    # 'z offset': CPI(value=1.0, maximum=50, minimum=0.1, multiplier=10),
-    'x': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
-    'y': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
-    'z': CPI(value=x/2, maximum=x, minimum=0, multiplier=1),
-}
-# can't seem to use simultaneously with thruster biases control panel... sometimes. idk.
-create_control_panel("verti PID", values)
 
 '''
 [X, Y, Z]
@@ -28,29 +17,54 @@ create_control_panel("verti PID", values)
  - +P is pitch up
  - +Y is yaw left
 '''
+class DirectionTestNode(Node):
+    def __init__(self, thruster_allocator_node):
+        super().__init__('direction_test_node')
+        package_directory = get_package_share_directory('controls_movement')
+        self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
+        config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
+        self.get_logger().info(f"{read_pid_yaml_and_generate_parameters('direction_test_node', config_location)}")
+        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('direction_test_node', config_location))
+        self.x = 200
+        self.thrusterAllocator = thruster_allocator_node
+        thrusterController = ThrusterControl()
+        self.timer = self.create_timer(0.2, self.callback) #replaced with timer because while loop causes threading issues
 
-def main():
-    thrusterAllocator = ThrustAllocator()
-    thrusterController = ThrusterControl()
-    try:
-        while True:
+    def callback(self):
+        try:
             # Translation = [0, 0, 0]
-            Rotation = [values["x"].value-x/2, values["y"].value-x/2, values["z"].value-x/2]
+            Rotation = [self.get_value("x")-self.x/2, self.get_value("y")-self.x/2, self.get_value("z")-self.x/2]
 
             #Rotation = [0, 0, 0]
             #if all(val == 0 for val in Translation):
 
-            thruster_pwm = thrusterAllocator.getTranslationPwm(Rotation)
+            thruster_pwm = self.thrusterAllocator.getTranslationPwm(Rotation)
 
-            print(thruster_pwm)
+            self.get_logger().info(f"{thruster_pwm}")
 
-            thrusterController.setThrusters(thrustValues=thruster_pwm)
-    except KeyboardInterrupt:
-        thrusterController.killThrusters()
-    finally:
-        thrusterController.killThrusters()
-        rclpy.shutdown()
+            this.thrusterController.setThrusters(thrustValues=thruster_pwm)
+        except KeyboardInterrupt:
+            thrusterController.killThrusters()
+        finally:
+            thrusterController.killThrusters()
+            rclpy.shutdown()
 
+    def get_value(self, param_name: str):
+            return self.get_parameter(param_name).get_parameter_value().double_value
+
+def main(args=None):
+    rclpy.init(args=args)
+    thruster_allocator_node = ThrustAllocator()
+    direction_test_node = DirectionTestNode(thruster_allocator_node)
+
+    executor = MultiThreadedExecutor()
+    executor.add_node(thruster_allocator_node)
+    executor.add_node(direction_test_node)
+    executor.spin()
+
+    thruster_allocator_node.destroy_node()
+    direction_test_node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

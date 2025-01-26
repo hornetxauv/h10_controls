@@ -1,0 +1,93 @@
+depth_ori_pid_node:
+  ros__parameters:
+    config_location: '/config/depth_orientation_pid.yaml'
+    # z_offset parameter is commented out
+    # z_offset: 1.0
+    # z_offset_min: 0.1
+    # z_offset_max: 50.0
+    # z_offset_step: 0.1
+
+    # PWM parameters are commented out
+    # 0_pwm: 140.0
+    # 0_pwm_min: 0.0
+    # 0_pwm_max: 250.0
+    # 0_pwm_step: 1.0
+    # 1_pwm: 140.0
+    # 1_pwm_min: 0.0
+    # 1_pwm_max: 250.0
+    # 1_pwm_step: 1.0
+    # 2_pwm: 140.0
+    # 2_pwm_min: 0.0
+    # 2_pwm_max: 250.0
+    # 2_pwm_step: 1.0
+    # 3_pwm: 140.0
+    # 3_pwm_min: 0.0
+    # 3_pwm_max: 250.0
+    # 3_pwm_step: 1.0
+    # 4_pwm: 140.0
+    # 4_pwm_min: 0.0
+    # 4_pwm_max: 250.0
+    # 4_pwm_step: 1.0
+    # 5_pwm: 140.0
+    # 5_pwm_min: 0.0
+    # 5_pwm_max: 250.0
+    # 5_pwm_step: 1.0
+    # 6_pwm: 140.0
+    # 6_pwm_min: 0.0
+    # 6_pwm_max: 250.0
+    # 6_pwm_step: 1.0
+
+    multiplier: 1.0
+    multiplier_min: 0.0
+    multiplier_max: 5.0
+    multiplier_step: 1.0
+
+    desired_depth: 1.0
+    desired_depth_min: 0.0
+    desired_depth_max: 2.0
+    desired_depth_step: 0.1
+
+    depth_Kp: 0.0
+    depth_Kp_min: 0.0
+    depth_Kp_max: 20.0
+    depth_Kp_step: 0.1
+
+    depth_Ki: 0.0
+    depth_Ki_min: 0.0
+    depth_Ki_max: 1.0
+    depth_Ki_step: 0.01
+
+    depth_Kd: 0.0
+    depth_Kd_min: 0.0
+    depth_Kd_max: 1.0
+    depth_Kd_step: 0.01
+
+    roll_Kp: 0.1
+    roll_Kp_min: 0.0
+    roll_Kp_max: 1.0
+    roll_Kp_step: 0.01
+
+    roll_Ki: 0.0
+    roll_Ki_min: 0.0
+    roll_Ki_max: 1.0
+    roll_Ki_step: 0.01
+
+    roll_Kd: 0.1
+    roll_Kd_min: 0.0
+    roll_Kd_max: 1.0
+    roll_Kd_step: 0.01
+
+    pitch_Kp: 0.1
+    pitch_Kp_min: 0.0
+    pitch_Kp_max: 1.0
+    pitch_Kp_step: 0.01
+
+    pitch_Ki: 0.0
+    pitch_Ki_min: 0.0
+    pitch_Ki_max: 1.0
+    pitch_Ki_step: 0.01
+
+    pitch_Kd: 0.1
+    pitch_Kd_min: 0.0
+    pitch_Kd_max: 1.0
+    pitch_Kd_step: 0.01

@@ -1,0 +1,87 @@
+pid_node:
+  ros__parameters:
+    config_location: '/config/vert_pid_test.yaml'
+    depth_kd_multiplier: 1
+    depth_kd_multiplier_min: 0
+    depth_kd_multiplier_max: 5
+    depth_kd_multiplier_step: 1
+
+    depth_ki_multiplier: 1
+    depth_ki_multiplier_min: 0
+    depth_ki_multiplier_max: 5
+    depth_ki_multiplier_step: 1
+
+    ki_multiplier: 3
+    ki_multiplier_min: 0
+    ki_multiplier_max: 5
+    ki_multiplier_step: 1
+
+    kd_multiplier: 1
+    kd_multiplier_min: 0
+    kd_multiplier_max: 5
+    kd_multiplier_step: 1
+
+    desired_depth: 1.0
+    desired_depth_min: 0
+    desired_depth_max: 200
+    desired_depth_step: 1
+
+    depth_Kp: 0.05
+    depth_Kp_min: 0
+    depth_Kp_max: 50
+    depth_Kp_step: 10
+
+    depth_Ki: 0
+    depth_Ki_min: 0
+    depth_Ki_max: 1
+    depth_Ki_step: 0.01
+
+    depth_Kd: 0
+    depth_Kd_min: 0
+    depth_Kd_max: 1
+    depth_Kd_step: 0.01
+
+    roll_Kp: 0.03
+    roll_Kp_min: 0
+    roll_Kp_max: 1
+    roll_Kp_step: 0.01
+
+    roll_Ki: 0.11
+    roll_Ki_min: 0
+    roll_Ki_max: 1
+    roll_Ki_step: 0.01
+
+    roll_Kd: 0.15
+    roll_Kd_min: 0
+    roll_Kd_max: 1
+    roll_Kd_step: 0.01
+
+    pitch_Kp: 0.03
+    pitch_Kp_min: 0
+    pitch_Kp_max: 1
+    pitch_Kp_step: 0.01
+
+    pitch_Ki: 0.11
+    pitch_Ki_min: 0
+    pitch_Ki_max: 1
+    pitch_Ki_step: 0.01
+
+    pitch_Kd: 0.15
+    pitch_Kd_min: 0
+    pitch_Kd_max: 1
+    pitch_Kd_step: 0.01
+
+    yaw_Kp: 0
+    yaw_Kp_min: 0
+    yaw_Kp_max: 1
+    yaw_Kp_step: 0.01
+
+    yaw_Ki: 0
+    yaw_Ki_min: 0
+    yaw_Ki_max: 1
+    yaw_Ki_step: 0.01
+
+    yaw_Kd: 0
+    yaw_Kd_min: 0
+    yaw_Kd_max: 1
+    yaw_Kd_step: 0.01

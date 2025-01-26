@@ -1,0 +1,37 @@
+pid_node:
+  ros__parameters:
+    config_location: '/config/pid.yaml'
+    z_offset: 1.0
+    z_offset_min: 0.1
+    z_offset_max: 50.0
+    z_offset_step: 0.1
+
+    x_Kp: 1.0
+    x_Kp_min: 0.1
+    x_Kp_max: 10.0
+    x_Kp_step: 0.1
+
+    x_Ki: 0.01
+    x_Ki_min: 0.01
+    x_Ki_max: 1.0
+    x_Ki_step: 0.01
+
+    x_Kd: 0.4
+    x_Kd_min: 0.1
+    x_Kd_max: 10.0
+    x_Kd_step: 0.1
+
+    z_Kp: 1.0
+    z_Kp_min: 0.1
+    z_Kp_max: 10.0
+    z_Kp_step: 0.1
+
+    z_Ki: 0.01
+    z_Ki_min: 0.01
+    z_Ki_max: 1.0
+    z_Ki_step: 0.01
+
+    z_Kd: 0.4
+    z_Kd_min: 0.1
+    z_Kd_max: 10.0
+    z_Kd_step: 0.1

@@ -14,6 +14,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         # Include all launch files. (includes both python and xml launch files)
         (os.path.join("share", package_name, "launch"), glob("launch_files/*.launch.py")),
+        (os.path.join('share', package_name, 'config'), glob('config/*.*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -45,6 +46,8 @@ setup(
             "movementControls = controls_movement.movement_controller:main",
 
             "sensorViewer = controls_movement.sensor_viewer:main",
+            "sim_control_panel = controls_movement.control_panel_sim_test:main",
+            "thrust = controls_movement.thruster_allocator_test:main"
         ],
     },
 )

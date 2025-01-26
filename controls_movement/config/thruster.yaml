@@ -1,0 +1,39 @@
+thruster_allocator_node:
+  ros__parameters:
+    config_location: '/config/thruster.yaml'
+    thrust_map_location: '/config/thrust_map.csv' 
+
+    FL: 100.0
+    FL_min: 0.0
+    FL_max: 200.0
+    FL_step: 1.0
+
+    FR: 100.0
+    FR_min: 0.0
+    FR_max: 200.0
+    FR_step: 1.0
+
+    RL: 100.0
+    RL_min: 0.0
+    RL_max: 200.0
+    RL_step: 1.0
+
+    RR: 100.0
+    RR_min: 0.0
+    RR_max: 200.0
+    RR_step: 1.0
+
+    ML: 100.0
+    ML_min: 0.0
+    ML_max: 200.0
+    ML_step: 1.0
+
+    MR: 100.0
+    MR_min: 0.0
+    MR_max: 200.0
+    MR_step: 1.0
+
+    MM: 100.0
+    MM_min: 0.0
+    MM_max: 200.0
+    MM_step: 1.0

@@ -12,16 +12,20 @@ from launch.actions import (
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 # This function is always needed
 def generate_launch_description():
+    vert_pid_config_path = PathJoinSubstitution(
+        [FindPackageShare('controls_movement'), 'config', 'vert_pid_test.yaml']
+    )
     # main_run = Node(package="controls_movement", executable="moveLeft") 
     # change this line to move different direction
     #TODO make it a parameter
     ld = [
         Node(package="can_handler", executable="can_handler"),
-        Node(package="controls_movement", executable="vertPID"),
+        Node(package="controls_movement", executable="vertPID", parameters=[vert_pid_config_path]),
         # Node(package="controls_movement", executable="vertPID_pub"),
     ]
     return LaunchDescription(ld)

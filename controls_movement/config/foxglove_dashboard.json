@@ -1,0 +1,362 @@
+{
+  "configById": {
+    "Control-Panel.Control Panel!2p12x4d": {},
+    "TopicGraph!2vgp64g": {},
+    "Plot!usibyb": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/controls/wanted_depth_ori.pitch",
+          "enabled": true,
+          "color": "#e36c4f",
+          "label": "Pitch"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/controls/wanted_depth_ori.roll",
+          "enabled": true,
+          "color": "#ebf54c",
+          "label": "Roll"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/controls/wanted_depth_ori.yaw",
+          "enabled": true,
+          "color": "#aa72f7",
+          "label": "Yaw"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/controls/wanted_depth_ori.depth",
+          "enabled": true,
+          "color": "#5cd6a9",
+          "label": "Depth"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "desired depth ori"
+    },
+    "RawMessages!14s4yue": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/sensors/depth_imu",
+      "fontSize": 10,
+      "expansion": {
+        "header": "c",
+        "stamp~header": "e"
+      }
+    },
+    "RawMessages!ndu208": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/controls/wanted_depth_ori",
+      "fontSize": 12
+    },
+    "RawMessages!esxmj3": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/controls/wanted_translation",
+      "fontSize": 12
+    },
+    "RawMessages!3uusta2": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/sensors/battery.voltage",
+      "fontSize": 12
+    },
+    "Plot!4d3r9d6": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/sensors/depth_imu.pitch",
+          "enabled": true,
+          "color": "#f5774d",
+          "label": "Pitch"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/sensors/depth_imu.roll",
+          "enabled": true,
+          "color": "#f7df71",
+          "label": "Roll"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/sensors/depth_imu.yaw",
+          "enabled": true,
+          "color": "#a395e2",
+          "label": "Yaw"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/sensors/depth_imu.depth",
+          "enabled": true,
+          "color": "#5cd6a9",
+          "label": "Depth"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": false,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "depth_ori plot"
+    },
+    "3D!z5pk92": {
+      "cameraState": {
+        "distance": 5.839780486764503,
+        "perspective": true,
+        "phi": 76.39366853697543,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0.017407143156761028,
+          -0.3205576848772873,
+          1.2846484030445735e-18
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": -178.94727019861338,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000,
+        "logDepth": false
+      },
+      "followMode": "follow-pose",
+      "scene": {
+        "enableStats": false,
+        "backgroundColor": "#000000",
+        "syncCamera": false
+      },
+      "transforms": {
+        "frame:": {
+          "visible": false
+        }
+      },
+      "topics": {
+        "/hornet/posestamped": {
+          "visible": true,
+          "type": "arrow"
+        }
+      },
+      "layers": {
+        "grid": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "bdf117bb-1437-4dec-bd8f-e875e181efa6",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {},
+      "foxglovePanelTitle": "depth_ori 3D"
+    },
+    "Joystick Panel.Joystick!1h69qv2": {},
+    "Image!3mnp456": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/left/compressed"
+      },
+      "foxglovePanelTitle": "Front Cam"
+    },
+    "Image!csygos": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/left/compressed"
+      },
+      "foxglovePanelTitle": "Bottom Cam"
+    }
+  },
+  "globalVariables": {
+    "globalVariable": 2,
+    "qweqwe": 8
+  },
+  "userNodes": {
+    "605c1fc4-7e71-4723-8e27-b798e0980f61": {
+      "sourceCode": "// The ./types module provides helper types for your Input events and messages.\nimport { Input, Message } from \"./types\";\n\n// Your script can output well-known message types, any of your custom message types, or\n// complete custom message types.\n//\n// Use `Message` to access types from the schemas defined in your data source:\n// type Twist = Message<\"geometry_msgs/Twist\">;\n//\n// Import from the @foxglove/schemas package to use foxglove schema types:\n// import { Pose, LocationFix } from \"@foxglove/schemas\";\n//\n// Conventionally, it's common to make a _type alias_ for your script's output type\n// and use that type name as the return type for your script function.\n// Here we've called the type `Output` but you can pick any type name.\ntype Output = {\n  hello: string;\n};\n\n// These are the topics your script \"subscribes\" to. Studio will invoke your script function\n// when any message is received on one of these topics.\nexport const inputs = [\"/input/topic\"];\n\n// Any output your script produces is \"published\" to this topic. Published messages are only visible within Studio, not to your original data source.\nexport const output = \"/studio_script/output_topic\";\n\n// This function is called with messages from your input topics.\n// The first argument is an event with the topic, receive time, and message.\n// Use the `Input<...>` helper to get the correct event type for your input topic messages.\nexport default function script(event: Input<\"/input/topic\">): Output {\n  return {\n    hello: \"world!\",\n  };\n};",
+      "name": "605c1fc4"
+    }
+  },
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "first": "Control-Panel.Control Panel!2p12x4d",
+      "second": "TopicGraph!2vgp64g",
+      "direction": "column",
+      "splitPercentage": 72.89156626506023
+    },
+    "second": {
+      "direction": "row",
+      "first": {
+        "first": {
+          "first": {
+            "first": "Plot!usibyb",
+            "second": "RawMessages!14s4yue",
+            "direction": "column",
+            "splitPercentage": 81.71127331711273
+          },
+          "second": "RawMessages!ndu208",
+          "direction": "column",
+          "splitPercentage": 81.38613861386139
+        },
+        "second": {
+          "first": "RawMessages!esxmj3",
+          "second": "RawMessages!3uusta2",
+          "direction": "column",
+          "splitPercentage": 49.01960784313727
+        },
+        "direction": "column",
+        "splitPercentage": 73.01204819277109
+      },
+      "second": {
+        "direction": "row",
+        "first": {
+          "first": "Plot!4d3r9d6",
+          "second": "3D!z5pk92",
+          "direction": "column"
+        },
+        "second": {
+          "first": {
+            "first": "Joystick Panel.Joystick!1h69qv2",
+            "second": "Image!3mnp456",
+            "direction": "column",
+            "splitPercentage": 50.097465886939574
+          },
+          "second": "Image!csygos",
+          "direction": "column",
+          "splitPercentage": 61.80722891566265
+        },
+        "splitPercentage": 65.2718424055277
+      },
+      "splitPercentage": 42.690582959641254
+    },
+    "splitPercentage": 28.84882108183079
+  }
+}

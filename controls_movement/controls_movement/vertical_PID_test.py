@@ -6,33 +6,17 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
-from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
-
-values = {
-    'depth_kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'depth_ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'ki_multiplier': CPI(value=3, maximum=5, minimum=0, multiplier=1),
-    'kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'desired_depth': CPI(value=1.0, maximum=200, minimum=0, multiplier=1),
-    'depth Kp': CPI(value=0.05, maximum=50, minimum=0, multiplier=10),
-    'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'roll Kp': CPI(value=0.03, maximum=1, minimum=0, multiplier=100),
-    'roll Ki': CPI(value=0.11, maximum=1, minimum=0, multiplier=100),
-    'roll Kd': CPI(value=0.15, maximum=1, minimum=0, multiplier=100),
-    'pitch Kp': CPI(value=0.03, maximum=1, minimum=0, multiplier=100),
-    'pitch Ki': CPI(value=0.11, maximum=1, minimum=0, multiplier=100),
-    'pitch Kd': CPI(value=0.15, maximum=1, minimum=0, multiplier=100),
-    'yaw Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'yaw Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'yaw Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-}
-
-create_control_panel("verti PID", values)
+from ament_index_python.packages import get_package_share_directory
+from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 
 class PIDNode(Node):
     def __init__(self):
         super().__init__('pid_node')
+        package_directory = get_package_share_directory('controls_movement')
+        self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
+        config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
+        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('pid_node', config_location))
+
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
@@ -61,7 +45,7 @@ class PIDNode(Node):
         # PID parameters
 
         # change back once control panel not needed
-        self.desired_depth = -values['desired_depth'].value # Example depth to maintain
+        self.desired_depth = -get_value('desired_depth') # Example depth to maintain
 
 
         self.desired_roll = 0.0    # Example orientation targets
@@ -76,13 +60,16 @@ class PIDNode(Node):
         
 
         # change back once control panel not needed
-        self.depth_pid = PIDController(Kp=values['depth Kp'].value, Ki=values['depth Ki'].value, Kd=values['depth Kd'].value)
-        self.roll_pid = PIDController(Kp=values['roll Kp'].value, Ki=values['roll Ki'].value, Kd=values['roll Kd'].value)
-        self.pitch_pid = PIDController(Kp=values['pitch Kp'].value, Ki=values['pitch Ki'].value, Kd=values['pitch Kd'].value)
-        self.yaw_pid = PIDController(Kp=values['yaw Kp'].value, Ki=values['yaw Ki'].value, Kd=values['yaw Kd'].value)
+        self.depth_pid = PIDController(Kp=get_value('depth_Kp'), Ki=get_value('depth_Ki'), Kd=get_value('depth_Kd'))
+        self.roll_pid = PIDController(Kp=get_value('roll_Kp'), Ki=get_value('roll_Ki'), Kd=get_value('roll_Kd'))
+        self.pitch_pid = PIDController(Kp=get_value('pitch_Kp'), Ki=get_value('pitch_Ki'), Kd=get_value('pitch_Kd'))
+        self.yaw_pid = PIDController(Kp=get_value('yaw_Kp'), Ki=get_value('yaw_Ki'), Kd=get_value('yaw_Kd'))
 
         ############################################################################
         ############################################################################
+
+    def get_value(self, param_name: str):
+        return self.get_parameter(param_name).get_parameter_value().double_value
 
 
     def drpy_callback(self, msg):
@@ -107,18 +94,18 @@ class PIDNode(Node):
 
     def stationkeep(self, dt):
         # change back once control panel not needed
-        self.depth_pid.update_consts(new_Kp=values['depth Kp'].value, new_Ki=values['depth Ki'].value, new_Kd=values['depth Kd'].value)
-        self.desired_depth = -(values['desired_depth'].value)/100
-        self.roll_pid.update_consts(new_Kp=values['roll Kp'].value, new_Ki=values['roll Ki'].value, new_Kd=values['roll Kd'].value)
-        self.pitch_pid.update_consts(new_Kp=values['pitch Kp'].value, new_Ki=values['pitch Ki'].value, new_Kd=values['pitch Kd'].value)
-        # self.desired_depth = -values['desired_depth'].value
+        self.depth_pid.update_consts(new_Kp=get_value('depth_Kp'), new_Ki=get_value('depth_Ki'), new_Kd=get_value('depth_Kd'))
+        self.desired_depth = -(get_value('desired_depth'))/100
+        self.roll_pid.update_consts(new_Kp=get_value('roll_Kp'), new_Ki=get_value('roll_Ki'), new_Kd=get_value('roll_Kd'))
+        self.pitch_pid.update_consts(new_Kp=get_value('pitch_Kp'), new_Ki=get_value('pitch_Ki'), new_Kd=get_value('pitch_Kd'))
+        # self.desired_depth = -get_value('desired_depth')
 
-        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=values["depth_kd_multiplier"].value, ki_multiplier=values["depth_ki_multiplier"].value)[0]
+        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=get_value("depth_kd_multiplier"), ki_multiplier=get_value("depth_ki_multiplier"))[0]
         translation = [0, 0, -100*depth_pid_output]
 
-        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)
-        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=values["kd_multiplier"].value, ki_multiplier=values["ki_multiplier"].value)[0]
+        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))
+        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))[0]
+        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))[0]
 
         rotation = [roll_output, pitch_output, yaw_output]
 

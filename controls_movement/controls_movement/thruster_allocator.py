@@ -1,26 +1,10 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
-from control_panel.control_panel import create_control_panel, ControlPanelItem as CPI #this is a package in PL repo
-
-values = {
-    'FL': CPI(value=100, maximum=200),
-    'FR': CPI(value=100, maximum=200),
-    'RL': CPI(value=100, maximum=200),
-    'RR': CPI(value=100, maximum=200),
-    'ML': CPI(value=100, maximum=200),
-    'MR': CPI(value=100, maximum=200),
-    'MM': CPI(value=100, maximum=200),
-}
-# create_control_panel("thruster biases", values)
-
-thruster_biases = np.array([values['FL'].value/100,   # Front Left
-                    values['FR'].value/100,    # Front Right
-                    values['RL'].value/100,    # Rear Left
-                    values['RR'].value/100,   # Rear Right
-                    values['ML'].value/100,    # Middle Left
-                    values['MR'].value/100,    # Middle Right
-                    values['MM'].value/100,]) # Middle Middle
+from ament_index_python.packages import get_package_share_directory
+from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
+import rclpy
+from rclpy.node import Node
 
 '''
 Thruster positions are relative to the CG of the hull
@@ -97,12 +81,7 @@ thruster_directions = thruster_directions / np.linalg.norm(
     thruster_directions, keepdims=True, axis=1
 )
 
-
-thrust_map = pd.read_csv("./src/controls/controls_movement/controls_movement/thrust_map.csv", sep=',', header=None).values
-#thrust_map = pd.read_csv("./thrust_map.csv", sep=',', header=None).values
-#./src/h10_controls/controls_movement/controls_movement/thrust_map.csv
-
-class ThrustAllocator:
+class ThrustAllocator(Node):
     '''
     ThrustAllocator solves the matrix Ax = b, where
     A (parameters) is a 6 x 7 matrix of unit xyz force, unit rpy,
@@ -112,13 +91,33 @@ class ThrustAllocator:
     def __init__(
         self,
         thruster_positions=thruster_positions,
-        thruster_directions=thruster_directions,
-        thrust_map=thrust_map
-    ):
+        thruster_directions=thruster_directions
+        ):
+
+        super().__init__('thruster_allocator_node')
+        package_directory = get_package_share_directory('controls_movement')
+        self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
+        config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
+        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('thruster_allocator_node', config_location))
+        
+        thrust_map_path = package_directory +  self.get_parameter('thrust_map_location').get_parameter_value().string_value #putting this here to try avoid [Errno 2] No such file or directory for thrust_map.csv
+        thrust_map = pd.read_csv(thrust_map_path, sep=',', header=None).values
+        self.thrust_map = thrust_map
         self.thruster_positions = thruster_positions
         self.thruster_directions = thruster_directions
-        self.thrust_map = thrust_map
+        
+        thruster_biases = np.array([self.get_value('FL')/100,   # Front Left
+                    self.get_value('FR')/100,    # Front Right
+                    self.get_value('RL')/100,    # Rear Left
+                    self.get_value('RR')/100,   # Rear Right
+                    self.get_value('ML')/100,    # Middle Left
+                    self.get_value('MR')/100,    # Middle Right
+                    self.get_value('MM')/100,]) # Middle Middle
+
         self.parameters = self.initCoefficientMatrix()
+
+    def get_value(self, param_name: str):
+        return self.get_parameter(param_name).get_parameter_value().double_value
 
     # Create coefficient matrix
     def initCoefficientMatrix(self):
@@ -139,19 +138,19 @@ class ThrustAllocator:
     def getOutputMatrix(self, target_xyz_force, target_rpy):
         target_xyz_force = np.array(target_xyz_force)
         target_rpy = np.array(target_rpy)
-         
+        
         return np.append(target_xyz_force, target_rpy)
 
     
     def thrustToPwm(self, thrust_forces):
         pwm = []
-        thruster_biases = np.array([values['FL'].value/100,   # Front Left
-                    values['FR'].value/100,    # Front Right
-                    values['RL'].value/100,    # Rear Left
-                    values['RR'].value/100,   # Rear Right
-                    values['ML'].value/100,    # Middle Left
-                    values['MR'].value/100,    # Middle Right
-                    values['MM'].value/100,]) # Middle Middle
+        thruster_biases = np.array([self.get_value('FL')/100,   # Front Left
+                    self.get_value('FR')/100,    # Front Right
+                    self.get_value('RL')/100,    # Rear Left
+                    self.get_value('RR')/100,   # Rear Right
+                    self.get_value('ML')/100,    # Middle Left
+                    self.get_value('MR')/100,    # Middle Right
+                    self.get_value('MM')/100,]) # Middle Middle
         for force, bias in zip(thrust_forces, thruster_biases):
             force *= bias
             print(f"bias {bias} force:{force}")

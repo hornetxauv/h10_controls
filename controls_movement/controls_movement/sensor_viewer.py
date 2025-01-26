@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from msg_types.msg import DepthIMU
+from msg_types.msg import IMU
 import cv2
 import numpy as np
 from collections import deque
@@ -193,6 +193,21 @@ class IMUPlotter(Node):
                 y_pos += add_text_block(text, (x_pos, y_pos))
 
         cv2.imshow(self.dashboard_window, dashboard_image)
+        for section_name, config in self.dashboard_sections.items():
+            y_pos = 80
+            x_pos = config['x_pos']
+            
+            y_pos += add_text_block(f"{section_name}:", (x_pos, y_pos), config['color'])
+            
+            for value_name in config['display_values'][0].split(','):
+                data = config['data'][value_name]
+                if isinstance(data, list):
+                    text = f"[{', '.join(str(x) for x in data)}]"
+                else:
+                    text = f"{value_name}: {data:.2f}"
+                y_pos += add_text_block(text, (x_pos, y_pos))
+
+        cv2.imshow(self.dashboard_window, dashboard_image)
         cv2.waitKey(1)
 
     def destroy_node(self):
@@ -202,6 +217,7 @@ class IMUPlotter(Node):
 def main(args=None):
     rclpy.init(args=args)
     imu_plotter = IMUPlotter()
+    
     
     try:
         rclpy.spin(imu_plotter)
@@ -213,3 +229,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+

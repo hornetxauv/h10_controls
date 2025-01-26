@@ -11,18 +11,18 @@ from control_panel.control_panel import create_control_panel, ControlPanelItem a
 values = {
     'depth_kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
     'depth_ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
-    'ki_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
+    'ki_multiplier': CPI(value=3, maximum=5, minimum=0, multiplier=1),
     'kd_multiplier': CPI(value=1, maximum=5, minimum=0, multiplier=1),
     'desired_depth': CPI(value=1.0, maximum=200, minimum=0, multiplier=1),
-    'depth Kp': CPI(value=0, maximum=50, minimum=0, multiplier=10),
+    'depth Kp': CPI(value=0.05, maximum=50, minimum=0, multiplier=10),
     'depth Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'depth Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'roll Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
-    'roll Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'roll Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
-    'pitch Kp': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
-    'pitch Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
-    'pitch Kd': CPI(value=0.1, maximum=1, minimum=0, multiplier=100),
+    'roll Kp': CPI(value=0.03, maximum=1, minimum=0, multiplier=100),
+    'roll Ki': CPI(value=0.11, maximum=1, minimum=0, multiplier=100),
+    'roll Kd': CPI(value=0.15, maximum=1, minimum=0, multiplier=100),
+    'pitch Kp': CPI(value=0.03, maximum=1, minimum=0, multiplier=100),
+    'pitch Ki': CPI(value=0.11, maximum=1, minimum=0, multiplier=100),
+    'pitch Kd': CPI(value=0.15, maximum=1, minimum=0, multiplier=100),
     'yaw Kp': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'yaw Ki': CPI(value=0, maximum=1, minimum=0, multiplier=100),
     'yaw Kd': CPI(value=0, maximum=1, minimum=0, multiplier=100),
@@ -129,7 +129,7 @@ class PIDNode(Node):
         outputDir = ("up" if depth_pid_output > 0 else "down")
         rotationOutput = ["+ve" if rot > 0 else "-ve" for rot in rotation]
 
-        self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth}")
+        self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth} error{error}")
         # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
 
 

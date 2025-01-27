@@ -4,13 +4,15 @@ from controls_movement.pid_controller import PIDController
 from msg_types.msg import DepthIMU
 import time
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
+
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 
 class PIDNode(Node):
-    def __init__(self):
+    def __init__(self, thruster_allocator_node):
         super().__init__('pid_node')
         package_directory = get_package_share_directory('controls_movement')
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
@@ -33,7 +35,7 @@ class PIDNode(Node):
         self.current_yaw = 0.0
 
         # Initialise ThrustAllocator and ThrusterControl
-        self.thrustAllocator = ThrustAllocator()
+        self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()   
 
         # Used for calculating dt from ros messages
@@ -45,7 +47,7 @@ class PIDNode(Node):
         # PID parameters
 
         # change back once control panel not needed
-        self.desired_depth = -get_value('desired_depth') # Example depth to maintain
+        self.desired_depth = self.get_value('desired_depth') # Example depth to maintain
 
 
         self.desired_roll = 0.0    # Example orientation targets
@@ -60,20 +62,21 @@ class PIDNode(Node):
         
 
         # change back once control panel not needed
-        self.depth_pid = PIDController(Kp=get_value('depth_Kp'), Ki=get_value('depth_Ki'), Kd=get_value('depth_Kd'))
-        self.roll_pid = PIDController(Kp=get_value('roll_Kp'), Ki=get_value('roll_Ki'), Kd=get_value('roll_Kd'))
-        self.pitch_pid = PIDController(Kp=get_value('pitch_Kp'), Ki=get_value('pitch_Ki'), Kd=get_value('pitch_Kd'))
-        self.yaw_pid = PIDController(Kp=get_value('yaw_Kp'), Ki=get_value('yaw_Ki'), Kd=get_value('yaw_Kd'))
+        self.depth_pid = PIDController(Kp=self.get_value('depth_Kp'), Ki=self.get_value('depth_Ki'), Kd=self.get_value('depth_Kd'))
+        self.roll_pid = PIDController(Kp=self.get_value('roll_Kp'), Ki=self.get_value('roll_Ki'), Kd=self.get_value('roll_Kd'))
+        self.pitch_pid = PIDController(Kp=self.get_value('pitch_Kp'), Ki=self.get_value('pitch_Ki'), Kd=self.get_value('pitch_Kd'))
+        self.yaw_pid = PIDController(Kp=self.get_value('yaw_Kp'), Ki=self.get_value('yaw_Ki'), Kd=self.get_value('yaw_Kd'))
 
         ############################################################################
         ############################################################################
+
 
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
 
     def drpy_callback(self, msg):
-        self.current_depth = -msg.depth
+        self.current_depth = msg.depth
         self.current_roll = msg.roll
         self.current_pitch = msg.pitch
         self.current_yaw = msg.yaw
@@ -94,18 +97,18 @@ class PIDNode(Node):
 
     def stationkeep(self, dt):
         # change back once control panel not needed
-        self.depth_pid.update_consts(new_Kp=get_value('depth_Kp'), new_Ki=get_value('depth_Ki'), new_Kd=get_value('depth_Kd'))
-        self.desired_depth = -(get_value('desired_depth'))/100
-        self.roll_pid.update_consts(new_Kp=get_value('roll_Kp'), new_Ki=get_value('roll_Ki'), new_Kd=get_value('roll_Kd'))
-        self.pitch_pid.update_consts(new_Kp=get_value('pitch_Kp'), new_Ki=get_value('pitch_Ki'), new_Kd=get_value('pitch_Kd'))
-        # self.desired_depth = -get_value('desired_depth')
+        self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
+        self.desired_depth = -(self.get_value('desired_depth'))/100
+        self.roll_pid.update_consts(new_Kp=self.get_value('roll_Kp'), new_Ki=self.get_value('roll_Ki'), new_Kd=self.get_value('roll_Kd'))
+        self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
+        # self.desired_depth = -self.get_value('desired_depth')
 
-        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=get_value("depth_kd_multiplier"), ki_multiplier=get_value("depth_ki_multiplier"))[0]
-        translation = [0, 0, -100*depth_pid_output]
+        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"))[0]
+        translation = [0, 0, -depth_pid_output]
 
-        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))
-        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))[0]
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=get_value("kd_multiplier"), ki_multiplier=get_value("ki_multiplier"))[0]
+        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
+        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
 
         rotation = [roll_output, pitch_output, yaw_output]
 
@@ -117,6 +120,7 @@ class PIDNode(Node):
         rotationOutput = ["+ve" if rot > 0 else "-ve" for rot in rotation]
 
         self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth} error{error}")
+        self.get_logger().info(f"KP: {self.get_value('depth_Kp')} KD: {self.get_value('depth_Kd')} KI: {self.get_value('depth_Ki')}")
         # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
 
 
@@ -126,17 +130,17 @@ class PIDNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    pid_node = PIDNode()
-    try:
-        while True:
-            rclpy.spin(pid_node)
-    except KeyboardInterrupt:
-        pid_node.thrusterControl.killThrusters()
-    finally:
-        pid_node.thrusterControl.killThrusters()
-        pid_node.destroy_node()
-        rclpy.shutdown()
+    thruster_allocator_node = ThrustAllocator()
+    pid_node = PIDNode(thruster_allocator_node)
 
+    executor = MultiThreadedExecutor()
+    executor.add_node(thruster_allocator_node)
+    executor.add_node(pid_node)
+    executor.spin()
+
+    thruster_allocator_node.destroy_node()
+    test_node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

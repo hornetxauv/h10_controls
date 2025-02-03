@@ -2,6 +2,9 @@ from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 from controls_movement.pid_controller import PIDController
 from msg_types.msg import DepthIMU
+# from msg_types.msg import Controls
+from msg_types.msg import PWMs
+from msg_types.msg import Movement
 import time
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -19,6 +22,10 @@ class PIDNode(Node):
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
         self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('pid_node', config_location))
 
+        self.wanted_depth_publisher = self.create_publisher(Float32, "/controls/wanted_depth_ori", 10)
+        # self.wanted_movement_publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
+        self.PWMs_publisher = self.create_publisher(PWMs, "/controls/PWMs", 10)
+        self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_movement", 10)
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
@@ -98,7 +105,7 @@ class PIDNode(Node):
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
-        self.desired_depth = -(self.get_value('desired_depth'))/100
+        self.desired_depth = -(self.get_value('desired_depth'))
         self.roll_pid.update_consts(new_Kp=self.get_value('roll_Kp'), new_Ki=self.get_value('roll_Ki'), new_Kd=self.get_value('roll_Kd'))
         self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
         # self.desired_depth = -self.get_value('desired_depth')
@@ -106,11 +113,15 @@ class PIDNode(Node):
         depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"))[0]
         translation = [0, 0, -depth_pid_output]
 
-        roll_output, error, kd, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+        roll_output, integral, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
 
         rotation = [roll_output, pitch_output, yaw_output]
+
+        # controls_msg = Controls()
+        # controls_msg.translation = translation
+        # self.wanted_movement_publisher.publish(controls_msg)
 
         thrustPWMs = self.thrustAllocator.getThrustPwm(translation, rotation)
 
@@ -119,14 +130,36 @@ class PIDNode(Node):
         outputDir = ("up" if depth_pid_output > 0 else "down")
         rotationOutput = ["+ve" if rot > 0 else "-ve" for rot in rotation]
 
-        self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth} error{error}")
-        self.get_logger().info(f"KP: {self.get_value('depth_Kp')} KD: {self.get_value('depth_Kd')} KI: {self.get_value('depth_Ki')}")
+        # self.get_logger().info(f"depthPID: {depth_pid_output},correctDir:{correctDir},outputDir:{outputDir},current_depth:{self.current_depth} desired:{self.desired_depth} integral{integral}")
+        # self.get_logger().info(f"KP: {self.get_value('depth_Kp')} KD: {self.get_value('depth_Kd')} KI: {self.get_value('depth_Ki')}")
         # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
+        
+        self.get_logger().info(f"pwms: {thrustPWMs}")
 
+        PWMs_msg = PWMs()
+        PWMs_msg.one = int(thrustPWMs[0])
+        PWMs_msg.two = int(thrustPWMs[1])
+        PWMs_msg.three = int(thrustPWMs[2])
+        PWMs_msg.four = int(thrustPWMs[3])
+        PWMs_msg.five = int(thrustPWMs[4])
+        PWMs_msg.six = int(thrustPWMs[5])
+        PWMs_msg.seven = int(thrustPWMs[6])
+        self.PWMs_publisher.publish(PWMs_msg)
 
+        movement_msg = Movement()
+        movement_msg.x = translation[0]
+        movement_msg.y = translation[1]
+        movement_msg.z = translation[2]
+        movement_msg.roll = rotation[0]
+        movement_msg.pitch = rotation[1]
+        movement_msg.yaw = rotation[2]
+        self.wanted_movement_publisher.publish(movement_msg)
+
+        msg = Float32()
+        msg.data = self.desired_depth
+        self.wanted_depth_publisher.publish(msg)
 
         self.thrusterControl.setThrusters(thrustPWMs)
-
 
 def main(args=None):
     rclpy.init(args=args)
@@ -139,7 +172,7 @@ def main(args=None):
     executor.spin()
 
     thruster_allocator_node.destroy_node()
-    test_node.destroy_node()
+    # test_node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

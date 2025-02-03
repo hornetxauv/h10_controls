@@ -1,17 +1,17 @@
 pid_node:
   ros__parameters:
     config_location: '/config/vert_pid_test.yaml'
-    depth_kd_multiplier: 1.0
+    depth_kd_multiplier: 0.0
     depth_kd_multiplier_min: 0.0
     depth_kd_multiplier_max: 5.0
     depth_kd_multiplier_step: 1.0
 
-    depth_ki_multiplier: 1.0
+    depth_ki_multiplier: 0.0
     depth_ki_multiplier_min: 0.0
     depth_ki_multiplier_max: 5.0
     depth_ki_multiplier_step: 1.0
 
-    ki_multiplier: 3.0
+    ki_multiplier: 0.0
     ki_multiplier_min: 0.0
     ki_multiplier_max: 5.0
     ki_multiplier_step: 1.0
@@ -23,12 +23,12 @@ pid_node:
 
     desired_depth: 1.0
     desired_depth_min: 0.0
-    desired_depth_max: 200.0
-    desired_depth_step: 1.0
+    desired_depth_max: 2.0
+    desired_depth_step: 0.1
 
-    depth_Kp: 0.05
+    depth_Kp: 50.0
     depth_Kp_min: 0.0
-    depth_Kp_max: 5000.0
+    depth_Kp_max: 500.0
     depth_Kp_step: 1.0
 
     depth_Ki: 0.0

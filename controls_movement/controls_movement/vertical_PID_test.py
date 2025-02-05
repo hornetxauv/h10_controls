@@ -147,19 +147,19 @@ class PIDNode(Node):
         self.PWMs_publisher.publish(PWMs_msg)
 
         movement_msg = Movement()
-        movement_msg.x = translation[0]
-        movement_msg.y = translation[1]
-        movement_msg.z = translation[2]
-        movement_msg.roll = rotation[0]
-        movement_msg.pitch = rotation[1]
-        movement_msg.yaw = rotation[2]
+        movement_msg.x = float(translation[0])
+        movement_msg.y = float(translation[1])
+        movement_msg.z = float(translation[2])
+        movement_msg.roll = float(rotation[0])
+        movement_msg.pitch = float(rotation[1])
+        movement_msg.yaw = float(rotation[2])
         self.wanted_movement_publisher.publish(movement_msg)
 
         msg = Float32()
         msg.data = self.desired_depth
         self.wanted_depth_publisher.publish(msg)
 
-        self.thrusterControl.setThrusters(thrustPWMs)
+        #self.thrusterControl.setThrusters(thrustPWMs)
 
 def main(args=None):
     rclpy.init(args=args)

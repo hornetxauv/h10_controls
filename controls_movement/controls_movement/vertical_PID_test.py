@@ -1,4 +1,4 @@
-from controls_movement.thruster_allocator import ThrustAllocator
+from controls_movement.thruster_allocator import ThrustAllocator, ThrustAllocResult
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 from controls_movement.pid_controller import PIDController
 from msg_types.msg import DepthIMU
@@ -105,7 +105,7 @@ class PIDNode(Node):
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
-        self.desired_depth = -(self.get_value('desired_depth'))
+        self.desired_depth = (self.get_value('desired_depth'))
         self.roll_pid.update_consts(new_Kp=self.get_value('roll_Kp'), new_Ki=self.get_value('roll_Ki'), new_Kd=self.get_value('roll_Kd'))
         self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
         # self.desired_depth = -self.get_value('desired_depth')
@@ -123,7 +123,8 @@ class PIDNode(Node):
         # controls_msg.translation = translation
         # self.wanted_movement_publisher.publish(controls_msg)
 
-        thrustPWMs = self.thrustAllocator.getThrustPwm(translation, rotation)
+        thrustAllocResult = self.thrustAllocator.getThrustPwm(translation, rotation)
+        thrustPWMs = thrustAllocResult.thrusts
 
         # debugging helpers
         correctDir = ("up" if self.desired_depth > self.current_depth else "down")
@@ -134,9 +135,10 @@ class PIDNode(Node):
         # self.get_logger().info(f"KP: {self.get_value('depth_Kp')} KD: {self.get_value('depth_Kd')} KI: {self.get_value('depth_Ki')}")
         # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
         
-        self.get_logger().info(f"pwms: {thrustPWMs}")
+        # self.get_logger().info(f"pwms: {thrustPWMs}")
 
         PWMs_msg = PWMs()
+        PWMs_msg.math_eqn_solvable = thrustAllocResult.solveSuccess
         PWMs_msg.one = int(thrustPWMs[0])
         PWMs_msg.two = int(thrustPWMs[1])
         PWMs_msg.three = int(thrustPWMs[2])

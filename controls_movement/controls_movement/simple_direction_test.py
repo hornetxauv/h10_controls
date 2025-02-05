@@ -21,7 +21,7 @@ class DirectionTestNode(Node):
     def __init__(self, thruster_allocator_node):
         super().__init__('direction_test_node')
         package_directory = get_package_share_directory('controls_movement')
-        self.declare_parameter('config_location', '')
+        self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
         self.get_logger().info(f"{read_pid_yaml_and_generate_parameters('direction_test_node', config_location)}")
         self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('direction_test_node', config_location))

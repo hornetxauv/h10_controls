@@ -162,6 +162,8 @@ class ThrustAllocator(Node):
         else:
             thrust_result.thrusts = self.thrustToPwm(thrust_forces)
 
+
+
         return thrust_result
     
     # Pure translation

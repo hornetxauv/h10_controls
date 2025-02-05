@@ -60,12 +60,6 @@ class PIDNode(Node):
         self.desired_roll = 0.0    # Example orientation targets
         self.desired_pitch = 0.0
         self.desired_yaw = 0.0
-
-
-        # self.depth_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        # self.roll_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        # self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        # self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
         
 
         # change back once control panel not needed
@@ -77,20 +71,28 @@ class PIDNode(Node):
         ############################################################################
         ############################################################################
 
+        self.frequency = self.get_value('PID_freq')
+        self.timer_period = 1.0 / self.frequency
+        self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
+
 
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
+    def change_timer_period(self, new_frequency):
+        self.timer.cancel()
 
-    def drpy_callback(self, msg):
-        self.current_depth = msg.depth
-        self.current_roll = msg.roll
-        self.current_pitch = msg.pitch
-        self.current_yaw = msg.yaw
+        self.frequency = new_frequency
+        self.timer_period = 1.0 / self.frequency
+
+        self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
+
+
+    def stationkeep_callback(self):
+        self.change_timer_period(self.get_value('PID_freq'))
 
         current_time = self.get_clock().now().to_msg()
         current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
-
 
         if self.last_time is None:
             self.last_time = current_seconds
@@ -102,6 +104,14 @@ class PIDNode(Node):
         self.stationkeep(dt)
 
 
+
+    def drpy_callback(self, msg):
+        self.current_depth = msg.depth
+        self.current_roll = msg.roll
+        self.current_pitch = msg.pitch
+        self.current_yaw = msg.yaw
+
+
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
@@ -111,7 +121,7 @@ class PIDNode(Node):
         # self.desired_depth = -self.get_value('desired_depth')
 
         depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"))[0]
-        translation = [0, 0, -depth_pid_output]
+        translation = [0, 0, depth_pid_output]
 
         roll_output, integral, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]

@@ -1,4 +1,4 @@
-thruster_allocator_node:
+direction_test_node:
   ros__parameters:
     config_location: '/config/simple_direction_test.yaml'
 

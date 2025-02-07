@@ -47,7 +47,7 @@ setup(
 
             "sensorViewer = controls_movement.sensor_viewer:main",
             "sim_control_panel = controls_movement.control_panel_sim_test:main",
-            "thrust = controls_movement.thruster_allocator_test:main"
+            "thrust = controls_movement.thruster_allocator_test:main",
         ],
     },
 )

@@ -5,6 +5,7 @@ from msg_types.msg import DepthIMU
 # from msg_types.msg import Controls
 from msg_types.msg import PWMs
 from msg_types.msg import Movement
+from msg_types.msg import PIDoutputs
 import time
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -26,6 +27,7 @@ class PIDNode(Node):
         # self.wanted_movement_publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
         self.PWMs_publisher = self.create_publisher(PWMs, "/controls/PWMs", 10)
         self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_movement", 10)
+        self.pid_publisher = self.create_publisher(PIDoutputs, "/controls/PIDoutputs", 10)
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
@@ -120,12 +122,12 @@ class PIDNode(Node):
         self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
         # self.desired_depth = -self.get_value('desired_depth')
 
-        depth_pid_output = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"))[0]
+        depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
         translation = [0, 0, depth_pid_output]
 
-        roll_output, integral, deri = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
-        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))[0]
+        roll_output, rP_term, rI_term, rD_term = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+        pitch_output, pP_term, pI_term, pD_term = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+        yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
 
         rotation = [roll_output, pitch_output, yaw_output]
 
@@ -158,6 +160,7 @@ class PIDNode(Node):
         PWMs_msg.seven = int(thrustPWMs[6])
         self.PWMs_publisher.publish(PWMs_msg)
 
+
         movement_msg = Movement()
         movement_msg.x = float(translation[0])
         movement_msg.y = float(translation[1])
@@ -167,11 +170,26 @@ class PIDNode(Node):
         movement_msg.yaw = float(rotation[2])
         self.wanted_movement_publisher.publish(movement_msg)
 
+        pid_msg = PIDoutputs()
+        pid_msg.roll_sum = rP_term + rD_term + rI_term
+        pid_msg.roll_prop = rP_term
+        pid_msg.roll_deri = rD_term
+        pid_msg.roll_inte = rI_term
+        pid_msg.pitch_sum = pP_term + pD_term + pI_term
+        pid_msg.pitch_prop = pP_term
+        pid_msg.pitch_deri = pD_term
+        pid_msg.pitch_inte = pI_term
+        pid_msg.depth_sum = dP_term + dD_term + dI_term
+        pid_msg.depth_prop = dP_term
+        pid_msg.depth_deri = dD_term
+        pid_msg.depth_inte = dI_term
+        self.pid_publisher.publish(pid_msg)
+
         msg = Float32()
         msg.data = self.desired_depth
         self.wanted_depth_publisher.publish(msg)
 
-        #self.thrusterControl.setThrusters(thrustPWMs)
+        self.thrusterControl.setThrusters(thrustPWMs)
 
 def main(args=None):
     rclpy.init(args=args)

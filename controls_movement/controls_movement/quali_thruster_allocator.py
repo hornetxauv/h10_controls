@@ -3,7 +3,6 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
-from controls_movement.thruster_allocator import ThrustAllocator
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
@@ -40,13 +39,13 @@ when the bot moves straight forward, it moves towards the point at (0, 0) (this 
 then, we will use our error values as (0, 0) - (20, 25) == (-20, -25)
 on which, we will do PID
 '''
-class QualiGateNode(Node):
-    def __init__(self, thruster_allocator_node):
-        super().__init__('quali_gate_node')
+class QualiGatePIDNode(Node):
+    def __init__(self):
+        super().__init__('quali_gate_pid_node')
         package_directory = get_package_share_directory('controls_movement')
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
-        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('quali_gate_node', config_location))
+        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('quali_gate_pid_node', config_location))
 
         
         #Subscribe to X, Z error data
@@ -76,7 +75,7 @@ class QualiGateNode(Node):
         ############################################################################
         
         
-        self.thrustAllocator = thruster_allocator_node
+        #self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()
 
         self.last_time = None
@@ -134,16 +133,13 @@ class QualiGateNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    thruster_allocator_node = ThrustAllocator()
-    pid_node = PIDNode(thruster_allocator_node)
+    pid_node = QualiGatePIDNode()
 
     executor = MultiThreadedExecutor()
-    executor.add_node(thruster_allocator_node)
     executor.add_node(pid_node)
     executor.spin()
 
-    thruster_allocator_node.destroy_node()
-    test_node.destroy_node()
+    #test_node.destroy_node()
     rclpy.shutdown()
 
 

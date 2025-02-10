@@ -17,9 +17,9 @@ from launch_ros.substitutions import FindPackageShare
 
 # This function is always needed
 def generate_launch_description():
-    vert_pid_config_path = PathJoinSubstitution(
-        [FindPackageShare('controls_movement'), 'config', 'vert_pid_test.yaml']
-    )
+    #vert_pid_config_path = PathJoinSubstitution(
+    #    [FindPackageShare('controls_movement'), 'config', 'vert_pid_test.yaml']
+    #)
     thruster_config_path = PathJoinSubstitution(
         [FindPackageShare('controls_movement'), 'config', 'thruster.yaml']
     )
@@ -28,7 +28,7 @@ def generate_launch_description():
     #TODO make it a parameter
     ld = [
         Node(package="can_handler", executable="can_handler"),
-        Node(package="controls_movement", executable="vertPIDTest", parameters=[vert_pid_config_path, thruster_config_path]),
+        Node(package="controls_movement", executable="uturn", parameters=[thruster_config_path]),
         # Node(package="controls_movement", executable="vertPID_pub"),
     ]
     return LaunchDescription(ld)

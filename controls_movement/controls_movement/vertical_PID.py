@@ -1,9 +1,6 @@
-from controls_movement.thruster_allocator import ThrustAllocator, ThrustAllocResult
-from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 from controls_movement.pid_controller import PIDController
 from msg_types.msg import DepthIMU
-# from msg_types.msg import Controls
-from msg_types.msg import PWMs
+from msg_types.msg import Controls
 from msg_types.msg import Movement
 from msg_types.msg import PIDoutputs
 import time
@@ -16,17 +13,16 @@ from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 
 class VerticalPIDNode(Node):
-    def __init__(self, thruster_allocator_node):
+    def __init__(self):
         super().__init__('vert_pid_node')
         package_directory = get_package_share_directory('controls_movement')
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
         self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('vert_pid_node', config_location))
 
-        self.wanted_depth_publisher = self.create_publisher(Float32, "/controls/wanted_depth_ori", 10)
+        self.wanted_depth_publisher = self.create_publisher(Float32, "/controls/wanted_depth", 10)
         # self.wanted_movement_publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
-        self.PWMs_publisher = self.create_publisher(PWMs, "/controls/PWMs", 10)
-        self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_movement", 10)
+        self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_pid_movement", 10)
         self.pid_publisher = self.create_publisher(PIDoutputs, "/controls/PIDoutputs", 10)
         
         #Subscribe to Depth, RPY Data
@@ -44,8 +40,8 @@ class VerticalPIDNode(Node):
         self.current_yaw = 0.0
 
         # Initialise ThrustAllocator and ThrusterControl
-        self.thrustAllocator = thruster_allocator_node
-        self.thrusterControl = ThrusterControl()   
+        # self.thrustAllocator = thruster_allocator_node
+        # self.thrusterControl = ThrusterControl()
 
         # Used for calculating dt from ros messages
         self.last_time = None
@@ -135,8 +131,18 @@ class VerticalPIDNode(Node):
         # controls_msg.translation = translation
         # self.wanted_movement_publisher.publish(controls_msg)
 
-        thrustAllocResult = self.thrustAllocator.getThrustPwm(translation, rotation)
-        thrustPWMs = thrustAllocResult.thrusts
+        # for the movement controller node
+        movement_msg = Movement()
+        movement_msg.x = float(translation[0])
+        movement_msg.y = float(translation[1])
+        movement_msg.z = float(translation[2])
+        movement_msg.roll = float(rotation[0])
+        movement_msg.pitch = float(rotation[1])
+        movement_msg.yaw = float(rotation[2])
+        self.wanted_movement_publisher.publish(movement_msg)
+
+        # thrustAllocResult = self.thrustAllocator.getThrustPwm(translation, rotation)
+        # thrustPWMs = thrustAllocResult.thrusts
 
         # debugging helpers
         correctDir = ("up" if self.desired_depth > self.current_depth else "down")
@@ -148,27 +154,6 @@ class VerticalPIDNode(Node):
         # self.get_logger().info(f"rotationOutput:{rotationOutput},(RPY):{self.current_roll},{self.current_pitch},{self.current_yaw} int_error:{error} ")
         
         # self.get_logger().info(f"pwms: {thrustPWMs}")
-
-        PWMs_msg = PWMs()
-        PWMs_msg.math_eqn_solvable = thrustAllocResult.solveSuccess
-        PWMs_msg.one = int(thrustPWMs[0])
-        PWMs_msg.two = int(thrustPWMs[1])
-        PWMs_msg.three = int(thrustPWMs[2])
-        PWMs_msg.four = int(thrustPWMs[3])
-        PWMs_msg.five = int(thrustPWMs[4])
-        PWMs_msg.six = int(thrustPWMs[5])
-        PWMs_msg.seven = int(thrustPWMs[6])
-        self.PWMs_publisher.publish(PWMs_msg)
-
-
-        movement_msg = Movement()
-        movement_msg.x = float(translation[0])
-        movement_msg.y = float(translation[1])
-        movement_msg.z = float(translation[2])
-        movement_msg.roll = float(rotation[0])
-        movement_msg.pitch = float(rotation[1])
-        movement_msg.yaw = float(rotation[2])
-        self.wanted_movement_publisher.publish(movement_msg)
 
         pid_msg = PIDoutputs()
         pid_msg.roll_sum = rP_term + rD_term + rI_term
@@ -189,19 +174,16 @@ class VerticalPIDNode(Node):
         msg.data = self.desired_depth
         self.wanted_depth_publisher.publish(msg)
 
-        self.thrusterControl.setThrusters(thrustPWMs)
+        # self.thrusterControl.setThrusters(thrustPWMs)
 
 def main(args=None):
     rclpy.init(args=args)
-    thruster_allocator_node = ThrustAllocator()
-    vert_pid_node = VerticalPIDNode(thruster_allocator_node)
+    vert_pid_node = VerticalPIDNode()
 
     executor = MultiThreadedExecutor()
-    executor.add_node(thruster_allocator_node)
     executor.add_node(vert_pid_node)
     executor.spin()
 
-    thruster_allocator_node.destroy_node()
     # test_node.destroy_node()
     rclpy.shutdown()
 

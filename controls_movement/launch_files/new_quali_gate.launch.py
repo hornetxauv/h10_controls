@@ -12,19 +12,26 @@ from launch.actions import (
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 # This function is always needed
 def generate_launch_description():
     # main_run = Node(package="controls_movement", executable="moveLeft") 
     # change this line to move different direction
     #TODO make it a parameter
+    vert_pid_config_path = PathJoinSubstitution(
+        [FindPackageShare('controls_movement'), 'config', 'vert_pid_test.yaml']
+    )
+    thruster_config_path = PathJoinSubstitution(
+        [FindPackageShare('controls_movement'), 'config', 'thruster.yaml']
+    )
     ld = [
         # Node(package="quali_gate_detector", executable="detector"),
         Node(package="can_handler", executable="can_handler"),
         # Node(package="quali_gate_detector", executable="detector_listener"),
         # Node(package="controls_movement", executable="qualiGate"),
-        Node(package="controls_movement", executable="depthOriPID"),
+        Node(package="controls_movement", executable="depthOriPID", parameters=[vert_pid_config_path, thruster_config_path]),
         Node(package="controls_movement", executable="movementControls")
         # Node(package="controls_movement", executable="qualiGate_pub"),
     ]

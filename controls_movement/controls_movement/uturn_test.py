@@ -10,9 +10,10 @@ And every 10 seconds, it will select a new desired Yaw to move towards and do PI
 
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-from msg_types.msg import IMU
+from msg_types.msg import DepthIMU
 import time
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray, Float32
 
@@ -35,13 +36,13 @@ class PIDController:
     
 
 class PIDNode(Node):
-    def __init__(self):
+    def __init__(self, thruster_allocator_node):
         super().__init__('pid_node')
 
         #Subscribe to Roll, Pitch, Yaw data
         self.subscriptionIMU = self.create_subscription(
-            IMU, #custom IMU msg type
-            '/sensors/imu',  
+            DepthIMU, #custom IMU msg type
+            '/sensors/depth_imu',  
             self.imu_callback,
             10
         )
@@ -70,7 +71,7 @@ class PIDNode(Node):
         ############################################################################
 
 
-        self.thrustAllocator = ThrustAllocator()
+        self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()
         self.last_time = None
 
@@ -101,11 +102,11 @@ class PIDNode(Node):
         
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.PID_dt)
         
-        thruster_pwm = self.thrustAllocator.getRotationPwm([0.0, 0.0, yaw_output])
+        thruster_pwm = self.thrustAllocator.getRotationPwm([0.0, 0.0, yaw_output]).thrusts
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
 
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        self.thrusterControl.setThrusters(thruster_pwm)
 
 
     def imu_callback(self, msg):
@@ -118,7 +119,7 @@ class PIDNode(Node):
         pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
         yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)
 
-        thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output])
+        thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output]).thrusts
 
         self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
 
@@ -128,9 +129,17 @@ class PIDNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    pid_node = PIDNode()
-    rclpy.spin(pid_node)
-    pid_node.destroy_node()
+    thruster_allocator_node = ThrustAllocator()
+    pid_node = PIDNode(thruster_allocator_node)
+    
+    executor = MultiThreadedExecutor()
+    executor.add_node(thruster_allocator_node)
+    executor.add_node(pid_node)
+    executor.spin()
+
+    thruster_allocator_node.destroy_node()
+    #rclpy.spin(pid_node)
+    #pid_node.destroy_node()
     rclpy.shutdown()
 
 

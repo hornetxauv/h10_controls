@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from msg_types.msg import Controls
+from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
 from controls_movement.thruster_allocator import ThrustAllocator
 from ament_index_python.packages import get_package_share_directory
@@ -40,26 +40,26 @@ when the bot moves straight forward, it moves towards the point at (0, 0) (this 
 then, we will use our error values as (0, 0) - (20, 25) == (-20, -25)
 on which, we will do PID
 '''
-class PIDNode(Node):
+class QualiGateNode(Node):
     def __init__(self, thruster_allocator_node):
-        super().__init__('pid_node')
+        super().__init__('quali_gate_node')
         package_directory = get_package_share_directory('controls_movement')
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
-        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('pid_node', config_location))
+        self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('quali_gate_node', config_location))
 
         
         #Subscribe to X, Z error data
         self.subscription = self.create_subscription(
             GateDetection,
             'perc/quali_gate',
-            self.error_callback,
+            self.detection_callback,
             10
         )
 
-        self.publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
+        self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
 
-        self.movement_message = Controls()
+        self.movement_message = Movement()
         
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
@@ -84,7 +84,7 @@ class PIDNode(Node):
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
-    def error_callback(self, msg):
+    def detection_callback(self, msg):
         x_error = msg.dx 
         # z_error = msg.dy # Note: removed due to using depth sensor
         width = msg.width

@@ -32,7 +32,8 @@ setup(
             "moveUp = controls_core.move_test:moveUp",
             "moveDown = controls_core.move_test:moveDown",
 
-            "vertPID = controls_movement.vertical_PID_test:main",
+            "vertPID = controls_movement.vertical_PID:main",
+            "vertPIDTest = controls_movement.vertical_PID_test:main",
             "vertPID_pub = controls_movement.vertical_PID_sample_pub:main",
 
             "uturn = controls_movement.uturn_test:main",
@@ -41,9 +42,11 @@ setup(
             "qualiGate_pub = controls_movement.quali_thruster_sample_pub:main",
 
             "dirTest = controls_movement.simple_direction_test:main",
+            "integratedDirTest = controls_movement.integrated_direction_test:main",
 
             "depthOriPID = controls_movement.depth_orientation_pid:main",
             "movementControls = controls_movement.movement_controller:main",
+            "full_movement = controls_movement.full_movement:main",
 
             "sensorViewer = controls_movement.sensor_viewer:main",
             "sim_control_panel = controls_movement.control_panel_sim_test:main",

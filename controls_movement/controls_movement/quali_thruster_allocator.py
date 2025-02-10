@@ -110,7 +110,7 @@ class QualiGateNode(Node):
         if width != 0:
             x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
-            y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+            #y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
         
         self.movement_message.translation = [x_output, y_output, 0]
         self.publish()

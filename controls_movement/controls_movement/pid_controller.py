@@ -6,7 +6,7 @@ class PIDController:
         self.previous_error = None
         self.integral = 0
 
-    def compute(self, setpoint, current_value, dt, kd_multiplier, ki_multiplier, integral_limit=200.0):
+    def compute(self, setpoint, current_value, dt, kd_multiplier=0, ki_multiplier=0, integral_limit=200.0):
         error = setpoint - current_value
         self.integral = max(-integral_limit, min(integral_limit, (self.integral) + error * dt))
         # self.integral = max(-3/1.1, min(3/1.1, self.integral))

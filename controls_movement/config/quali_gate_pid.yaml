@@ -7,7 +7,7 @@ quali_gate_pid_node:
     PID_freq_max: 50.0
     PID_freq_step: 0.1
 
-    x_Kp: 65.0
+    x_Kp: 0.0
     x_Kp_min: 0.0
     x_Kp_max: 500.0
     x_Kp_step: 1.0
@@ -17,7 +17,7 @@ quali_gate_pid_node:
     x_Ki_max: 1.0
     x_Ki_step: 0.01
 
-    x_Kd: 140.0
+    x_Kd: 0.0
     x_Kd_min: 0.0
     x_Kd_max: 1.0
     x_Kd_step: 0.01

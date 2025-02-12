@@ -114,7 +114,7 @@ class ThrustAllocator(Node):
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)
         thrusts = output.x
 
-        self.get_logger().info(f"Thruster Allocator: {output.success} status:{output.status}")
+        # self.get_logger().info(f"Thruster Allocator: {output.success} status:{output.status}")
 
         if output.status == 3:
             solveSuccess = True

@@ -3,30 +3,11 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
+
+from controls_movement.pid_controller import PIDController
+
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
-from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-
-'''
-Standard PID implementation
-Used as a class since both yaw and pitch use different instances of the same PID algo
-'''
-class PIDController:
-    def __init__(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.previous_error = 0
-        self.integral = 0
-
-    def compute(self, setpoint, current_value, dt):
-        error = setpoint - current_value
-        self.integral += error * dt
-        derivative = (error - self.previous_error) / dt if dt > 0 else 0
-        self.previous_error = error
-
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        return output
 
 
 '''
@@ -58,25 +39,17 @@ class QualiGatePIDNode(Node):
 
         self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
 
-        self.movement_message = Movement()
+        
         
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
         # self.z_error = 0.0
 
-        ############################################################################
-        ############################################################################
-        # PID parameters
-
         self.x_PID = PIDController(Kp=self.get_value('x_Kp'), Ki=self.get_value('x_Ki'), Kd=self.get_value('x_Kd'))
         # self.z_PID = PIDController(Kp=self.get_value('z_Kp'), Ki=self.get_value('z_Ki'), Kd=self.get_value('z_Kd'))
 
-        ############################################################################
-        ############################################################################
+
         
-        
-        #self.thrustAllocator = thruster_allocator_node
-        self.thrusterControl = ThrusterControl()
 
         self.last_time = None
 
@@ -84,10 +57,12 @@ class QualiGatePIDNode(Node):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
     def detection_callback(self, msg):
+        self.x_PID.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
+
+        # Taking to the right to be positive dx
         x_error = msg.dx 
         # z_error = msg.dy # Note: removed due to using depth sensor
         width = msg.width
-        # self.get_logger().info(f'x_error: {x_error}, z_error: {z_error}, distance: {width}')
         self.get_logger().info(f'x_error: {x_error}, distance: {width}')
 
         # Extract the timestamp from the message header
@@ -107,28 +82,18 @@ class QualiGatePIDNode(Node):
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if width != 0:
-            x_output = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+            x_output, xP_term, xI_term, xD_term = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
-            #y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
-        
-        self.movement_message.translation = [x_output, y_output, 0]
+            # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+
+        self.movement_message = Movement()
+        self.movement_message.x = float(x_output)
         self.publish()
-
-        # #attempt to set constant z_output to keep the AUV neutrally buoyant
-        # z_output += self.get_value('z_offset')
-
-        # thruster_pwm = self.thrustAllocator.getTranslationPwm([x_output, y_output, z_output])
-
-        # # self.get_logger().info(f'x_output: {x_output}, z_output: {z_output}, y_output: {y_output}')
-        # # self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-        # self.get_logger().info(f"{self.get_value('x_Kp')} {self.get_value('x_Ki')} {self.get_value('x_Kd')}")
-        
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
 
     def publish(self):
         if self.movement_message is not None:
             self.publisher.publish(self.movement_message)
-            self.get_logger().info(f"Published Translation: ${self.movement_message.translation} and Rotation ${self.movement_message.rotation}")
+            self.get_logger().info(f"Published Translation: ${self.movement_message.x}")
 
 
 def main(args=None):

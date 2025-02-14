@@ -104,7 +104,6 @@ def main(args=None):
     executor.add_node(pid_node)
     executor.spin()
 
-    #test_node.destroy_node()
     rclpy.shutdown()
 
 

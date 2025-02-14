@@ -16,3 +16,18 @@ direction_test_node:
     z_min: 0.0
     z_max: 200.0
     z_step: 1.0
+
+    roll: 100.0
+    roll_min: 0.0
+    roll_max: 200.0
+    roll_step: 1.0
+
+    pitch: 100.0
+    pitch_min: 0.0
+    pitch_max: 200.0
+    pitch_step: 1.0
+
+    yaw: 100.0
+    yaw_min: 0.0
+    yaw_max: 200.0
+    yaw_step: 1.0

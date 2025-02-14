@@ -3,6 +3,7 @@ from msg_types.msg import DepthIMU
 from msg_types.msg import Controls
 from msg_types.msg import Movement
 from msg_types.msg import PIDoutputs
+from msg_types.msg import YawInfo
 import time
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -24,6 +25,7 @@ class VerticalPIDNode(Node):
         # self.wanted_movement_publisher = self.create_publisher(Controls, "/controls/wanted_movement", 10)
         self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_pid_movement", 10)
         self.pid_publisher = self.create_publisher(PIDoutputs, "/controls/PIDoutputs", 10)
+        self.yaw_publisher = self.create_publisher(YawInfo, "/controls/yaw_info", 10)
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
@@ -57,7 +59,7 @@ class VerticalPIDNode(Node):
 
         self.desired_roll = 0.0    # Example orientation targets
         self.desired_pitch = 0.0
-        self.desired_yaw = 0.0
+        self.desired_yaw = None
         
 
         # change back once control panel not needed
@@ -69,25 +71,47 @@ class VerticalPIDNode(Node):
         ############################################################################
         ############################################################################
 
-        self.frequency = self.get_value('PID_freq')
-        self.timer_period = 1.0 / self.frequency
-        self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
+        # self.frequency = self.get_value('PID_freq')
+        # self.timer_period = 1.0 / self.frequency
+        # self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
 
 
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
-    def change_timer_period(self, new_frequency):
-        self.timer.cancel()
+    # def change_timer_period(self, new_frequency):
+    #     self.timer.cancel()
 
-        self.frequency = new_frequency
-        self.timer_period = 1.0 / self.frequency
+    #     self.frequency = new_frequency
+    #     self.timer_period = 1.0 / self.frequency
 
-        self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
+    #     self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
 
 
-    def stationkeep_callback(self):
-        self.change_timer_period(self.get_value('PID_freq'))
+    # def stationkeep_callback(self):
+    #     self.change_timer_period(self.get_value('PID_freq'))
+
+    #     current_time = self.get_clock().now().to_msg()
+    #     current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
+
+    #     if self.last_time is None:
+    #         self.last_time = current_seconds
+    #         return #dt is still zero, so do not do PID yet
+        
+    #     dt = current_seconds - self.last_time
+    #     self.last_time = current_seconds
+
+    #     self.stationkeep(dt)
+
+
+
+    def drpy_callback(self, msg):
+        if self.desired_yaw == None:
+            self.desired_yaw = msg.yaw
+        self.current_depth = msg.depth
+        self.current_roll = msg.roll
+        self.current_pitch = msg.pitch
+        self.current_yaw = msg.yaw
 
         current_time = self.get_clock().now().to_msg()
         current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
@@ -102,24 +126,19 @@ class VerticalPIDNode(Node):
         self.stationkeep(dt)
 
 
-
-    def drpy_callback(self, msg):
-        self.current_depth = msg.depth
-        self.current_roll = msg.roll
-        self.current_pitch = msg.pitch
-        self.current_yaw = msg.yaw
-
-
     def stationkeep(self, dt):
         # change back once control panel not needed
         self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
         self.desired_depth = (self.get_value('desired_depth'))
         self.roll_pid.update_consts(new_Kp=self.get_value('roll_Kp'), new_Ki=self.get_value('roll_Ki'), new_Kd=self.get_value('roll_Kd'))
         self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
-        # self.desired_depth = -self.get_value('desired_depth')
+        self.yaw_pid.update_consts(new_Kp=self.get_value('yaw_Kp'), new_Ki=self.get_value('yaw_Ki'), new_Kd=self.get_value('yaw_Kd'))
+        self.desired_yaw = (self.get_value('desired_yaw'))
+        self.get_logger().info(f"desiredyaw: {self.desired_yaw} ")
+
 
         depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
-        translation = [0, 0, depth_pid_output - 38.0]
+        translation = [0, 0, depth_pid_output - 29.75]
 
         roll_output, rP_term, rI_term, rD_term = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output, pP_term, pI_term, pD_term = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
@@ -135,7 +154,7 @@ class VerticalPIDNode(Node):
         movement_msg = Movement()
         movement_msg.x = float(translation[0])
         movement_msg.y = float(translation[1])
-        movement_msg.z = float(translation[2])
+        movement_msg.z = float(translation[2])  
         movement_msg.roll = float(rotation[0])
         movement_msg.pitch = float(rotation[1])
         movement_msg.yaw = float(rotation[2])
@@ -168,11 +187,20 @@ class VerticalPIDNode(Node):
         pid_msg.depth_prop = dP_term
         pid_msg.depth_deri = dD_term
         pid_msg.depth_inte = dI_term
+        pid_msg.yaw_sum = yaw_output
+        pid_msg.yaw_prop = yP_term
+        pid_msg.yaw_deri = yD_term
+        pid_msg.yaw_inte = yI_term
         self.pid_publisher.publish(pid_msg)
 
         msg = Float32()
         msg.data = self.desired_depth
         self.wanted_depth_publisher.publish(msg)
+
+        yaw_msg = YawInfo()
+        yaw_msg.desired_yaw = self.desired_yaw
+        yaw_msg.actual_yaw = self.current_yaw
+        self.yaw_publisher.publish(yaw_msg)
 
         # self.thrusterControl.setThrusters(thrustPWMs)
 

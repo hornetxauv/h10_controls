@@ -37,9 +37,9 @@ class DirectionTestNode(Node):
         movement_msg.x = float(self.get_value("x")-self.x/2)
         movement_msg.y = float(self.get_value("y")-self.x/2)
         movement_msg.z = float(self.get_value("z")-self.x/2)
-        movement_msg.roll = float(0.0)
-        movement_msg.pitch = float(0.0)
-        movement_msg.yaw = float(0.0)
+        movement_msg.roll = float(self.get_value("roll")-self.x/2)
+        movement_msg.pitch = float(self.get_value("pitch")-self.x/2)
+        movement_msg.yaw = float(self.get_value("yaw")-self.x/2)
         # Translation = [self.get_value("x")-self.x/2, self.get_value("y")-self.x/2, self.get_value("z")-self.x/2]
 
         #Rotation = [0, 0, 0]

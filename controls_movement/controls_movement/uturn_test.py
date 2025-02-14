@@ -1,145 +1,99 @@
-"""
-This code is used to test the u turn functionality 
-
-It will basically start trying to u turn every 10 seconds or so
-
-This is so that we can run the code and disconnect from the computer
-
-And every 10 seconds, it will select a new desired Yaw to move towards and do PID on that
-"""
-
-from controls_movement.thruster_allocator import ThrustAllocator
-from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-from msg_types.msg import DepthIMU
-import time
 import rclpy
-from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray, Float32
+from rclpy.executors import MultiThreadedExecutor
+from msg_types.msg import Movement
+from custom_msgs.msg import GateDetection
 
-class PIDController:
-    def __init__(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.previous_error = 0
-        self.integral = 0
+from controls_movement.pid_controller import PIDController
 
-    def compute(self, setpoint, current_value, dt):
-        error = setpoint - current_value
-        self.integral += error * dt
-        derivative = (error - self.previous_error) / dt if dt > 0 else 0
-        self.previous_error = error
+from ament_index_python.packages import get_package_share_directory
+from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        return output
-    
 
-class PIDNode(Node):
-    def __init__(self, thruster_allocator_node):
-        super().__init__('pid_node')
+class UTurnPIDNode(Node):
+    def __init__(self):
+        super().__init__('u_turn_node')
 
-        #Subscribe to Roll, Pitch, Yaw data
-        self.subscriptionIMU = self.create_subscription(
-            DepthIMU, #custom IMU msg type
-            '/sensors/depth_imu',  
-            self.imu_callback,
+        #Subscribe to yaw data 
+        self.subscription = self.create_subscription(
+            DepthIMU,
+            '/sensors/depth_imu',
+            self.drpy_callback,
             10
         )
 
-        # Latest sensor readings
-        self.current_roll = 0.0
-        self.current_pitch = 0.0
-        self.current_yaw = 0.0
+        self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
+
+        
+        # Current errors that will be updated every time ros topic is published to
+        self.yaw = None
+        self.goal_yaw = None
+        # self.z_error = 0.0
+
+        self.yaw_PID = PIDController(Kp=0.01, Ki=0, Kd=0)
+        # self.z_PID = PIDController(Kp=self.get_value('z_Kp'), Ki=self.get_value('z_Ki'), Kd=self.get_value('z_Kd'))
 
 
-        ############################################################################
-        ############################################################################
-        # PID parameters
+        
 
-        self.desired_yaw = 0.0
-        self.yaw_tolerance = 2.0
-
-        self.roll_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        self.pitch_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-        self.yaw_pid = PIDController(Kp=1.0, Ki=0.1, Kd=0.01)
-
-        self.PID_dt = 0.5
-
-
-        ############################################################################
-        ############################################################################
-
-
-        self.thrustAllocator = thruster_allocator_node
-        self.thrusterControl = ThrusterControl()
         self.last_time = None
 
-
-        # We initiate a new test every 10 seconds
-        self.isYawTesting = False
-        self.yaw_test_timer = self.create_timer(10.0, self.start_yaw_test)
-
-        self.pid_yaw_timer = self.create_timer(self.PID_dt, self.PID_yaw)
-
-    def start_yaw_test(self):
-        self.desired_yaw = (self.desired_yaw + 180.0) % 360.0
-        self.get_logger().info(f"Starting yaw test to {self.desired_yaw} degrees")
-        self.isYawTesting = True
-
-    def PID_yaw(self):
-        if not self.isYawTesting:
-            return
-        
-        error = self.desired_yaw - self.current_yaw
-
-        self.get_logger().info(f'Current Yaw: {self.current_yaw}')
-
-        if abs(error) <= self.yaw_tolerance:
-            self.get_logger().info("Yaw target reached")
-            self.isYawTesting = False
-            return
-        
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.PID_dt)
-        
-        thruster_pwm = self.thrustAllocator.getRotationPwm([0.0, 0.0, yaw_output]).thrusts
-
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
-
-        self.thrusterControl.setThrusters(thruster_pwm)
-
-
-    def imu_callback(self, msg):
-        self.current_roll = msg.roll
-        self.current_pitch = msg.pitch
+    def drpy_callback(self, msg):
         self.current_yaw = msg.yaw
+        if self.goal_yaw == None:
+            self.goal_yaw = (self.current_yaw + 180) % 180
 
-    def control_orientation(self):
-        roll_output = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = self.ori_freq)
-        pitch_output = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = self.ori_freq)
-        yaw_output = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.ori_freq)
+        
 
-        thruster_pwm = self.thrustAllocator.getRotationPwm([roll_output, pitch_output, yaw_output]).thrusts
 
-        self.get_logger().info(f'Thruster PWM Output: {thruster_pwm}')
+    def detection_callback(self, msg):
+        self.x_PID.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
 
-        self.thrusterControl.setThrusters(thrustValues=thruster_pwm)
+        # Taking to the right to be positive dx
+        x_error = msg.dx 
+        # z_error = msg.dy # Note: removed due to using depth sensor
+        width = msg.width
+        self.get_logger().info(f'x_error: {x_error}, distance: {width}')
 
+        # Extract the timestamp from the message header
+        current_time = self.get_clock().now().to_msg()
+        current_seconds = current_time.sec + current_time.nanosec * 1e-9
+
+        if self.last_time is None:
+            self.last_time = current_seconds
+            return #dt is still zero, so do not do PID yet
+
+        dt = current_seconds - self.last_time
+        self.last_time = current_seconds
+
+        x_output = 0.0
+        # z_output = 0.0
+        y_output = 0.0
+
+        # only do PID if there is a gate detected, i.e. distance between gates =/= 0
+        if width != 0:
+            x_output, xP_term, xI_term, xD_term = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+            # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
+            # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+
+        self.movement_message = Movement()
+        self.movement_message.x = float(x_output)
+        self.publish()
+
+    def publish(self):
+        if self.movement_message is not None:
+            self.publisher.publish(self.movement_message)
+            self.get_logger().info(f"Published Translation: ${self.movement_message.x}")
 
 
 def main(args=None):
     rclpy.init(args=args)
-    thruster_allocator_node = ThrustAllocator()
-    pid_node = PIDNode(thruster_allocator_node)
-    
+    pid_node = QualiGatePIDNode()
+
     executor = MultiThreadedExecutor()
-    executor.add_node(thruster_allocator_node)
     executor.add_node(pid_node)
     executor.spin()
 
-    thruster_allocator_node.destroy_node()
-    #rclpy.spin(pid_node)
-    #pid_node.destroy_node()
     rclpy.shutdown()
 
 

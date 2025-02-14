@@ -65,7 +65,7 @@ class MovementControllerNode(Node):
         self.update_movements()
 
     def unpack_vector(self, vector):
-        return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, vector.yaw])
+        return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
     
     def update_movements(self):
         self.translation = np.add(self.depth_translation, self.goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor

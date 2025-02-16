@@ -3,6 +3,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
+from msg_types.msg import YawInfo
 
 from controls_movement.pid_controller import PIDController
 
@@ -38,32 +39,32 @@ class QualiGatePIDNode(Node):
         )
 
         self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
-
-        
+        self.yaw_publisher = self.create_publisher(YawInfo, "/controls/yaw_info", 10)
         
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
         # self.z_error = 0.0
+        self.gate_sides_ratio = 1.0
 
-        self.x_PID = PIDController(Kp=self.get_value('x_Kp'), Ki=self.get_value('x_Ki'), Kd=self.get_value('x_Kd'))
+        self.x_pid = PIDController(Kp=self.get_value('x_Kp'), Ki=self.get_value('x_Ki'), Kd=self.get_value('x_Kd'))
         # self.z_PID = PIDController(Kp=self.get_value('z_Kp'), Ki=self.get_value('z_Ki'), Kd=self.get_value('z_Kd'))
-
-
+        self.sides_ratio_pid = PIDController(Kp=self.get_value('sides_ratio_Kp'), Ki=self.get_value('sides_ratio_Ki'), Kd=self.get_value('sides_ratio_Kd'))
         
-
         self.last_time = None
 
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
     def detection_callback(self, msg):
-        self.x_PID.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
+        self.x_pid.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
+        self.sides_ratio_pid.update_consts(new_Kp=self.get_value('sides_ratio_Kp'), new_Ki=self.get_value('sides_ratio_Ki'), new_Kd=self.get_value('sides_ratio_Kd'))
 
         # Taking to the right to be positive dx
-        x_error = msg.dx 
+        self.x_error = msg.dx 
         # z_error = msg.dy # Note: removed due to using depth sensor
+        self.gate_sides_ratio = msg.sides_ratio 
         width = msg.width
-        self.get_logger().info(f'x_error: {x_error}, distance: {width}')
+        self.get_logger().info(f'x_error: {self.x_error}, distance: {width}, gate_sides_ratio: {self.gate_sides_ratio}')
 
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
@@ -82,19 +83,20 @@ class QualiGatePIDNode(Node):
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if width != 0:
-            x_output, xP_term, xI_term, xD_term = self.x_PID.compute(setpoint=0.0, current_value=x_error, dt = dt)
+            x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt)
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
+            yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
 
         self.movement_message = Movement()
         self.movement_message.x = float(x_output)
+        self.movement_message.yaw = float(yaw_output)
         self.publish()
 
     def publish(self):
         if self.movement_message is not None:
             self.publisher.publish(self.movement_message)
-            self.get_logger().info(f"Published Translation: ${self.movement_message.x}")
-
+            self.get_logger().info(f"Published Movement: ${self.movement_message}")
 
 def main(args=None):
     rclpy.init(args=args)

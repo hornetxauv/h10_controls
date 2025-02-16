@@ -79,7 +79,8 @@ class QualiGatePIDNode(Node):
 
         x_output = 0.0
         # z_output = 0.0
-        y_output = 0.0
+        # y_output = 0.0
+        yaw_output = 0.0
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if width != 0:

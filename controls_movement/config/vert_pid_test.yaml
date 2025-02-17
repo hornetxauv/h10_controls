@@ -12,7 +12,7 @@ vert_pid_node:
     desired_yaw_max: 180.0
     desired_yaw_step: 1.0
 
-    desired_depth: -0.5
+    desired_depth: -1.0
     desired_depth_min: -2.0
     desired_depth_max: 0.0
     desired_depth_step: 0.1

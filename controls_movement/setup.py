@@ -22,7 +22,7 @@ setup(
     maintainer_email='izentoh.zenith@gmail.com',
     description='Pool test attempt 1',
     license='Apache License 2.0',
-    tests_require=['pytest'],
+    # tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             "moveLeft = controls_movement.pool_test_2:main",

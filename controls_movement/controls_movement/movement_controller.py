@@ -53,13 +53,13 @@ class MovementControllerNode(Node):
         self.full_movement_publisher = self.create_publisher(Movement, "/controls/full_movement", 10)
    
     def depth_callback(self, msg):
-        self.get_logger().info(f"Depth callback triggered")
-        self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
+        # self.get_logger().info(f"Depth callback triggered")
+        # self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
         self.depth_translation, self.depth_rotation = self.unpack_vector(msg)
         self.update_movements()
 
     def goal_callback(self, msg):
-        self.get_logger().info(f"Goal callback triggered")
+        # self.get_logger().info(f"Goal callback triggered")
         self.goal_translation, self.goal_rotation = self.unpack_vector(msg)
         # self.get_logger().info(f"READ Translation: {self.goal_translation} Rotation: {self.goal_rotation}")
         self.update_movements()

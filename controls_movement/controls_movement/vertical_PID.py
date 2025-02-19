@@ -134,7 +134,7 @@ class VerticalPIDNode(Node):
         self.pitch_pid.update_consts(new_Kp=self.get_value('pitch_Kp'), new_Ki=self.get_value('pitch_Ki'), new_Kd=self.get_value('pitch_Kd'))
         self.yaw_pid.update_consts(new_Kp=self.get_value('yaw_Kp'), new_Ki=self.get_value('yaw_Ki'), new_Kd=self.get_value('yaw_Kd'))
         self.desired_yaw = (self.get_value('desired_yaw'))
-        self.get_logger().info(f"desiredyaw: {self.desired_yaw} ")
+        # self.get_logger().info(f"desiredyaw: {self.desired_yaw} ")
 
 
         depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)

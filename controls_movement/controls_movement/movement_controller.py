@@ -53,15 +53,15 @@ class MovementControllerNode(Node):
         self.full_movement_publisher = self.create_publisher(Movement, "/controls/full_movement", 10)
    
     def depth_callback(self, msg):
-        self.get_logger().info(f"Depth callback triggered")
-        self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
+        # self.get_logger().info(f"Depth callback triggered")
+        # self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
         self.depth_translation, self.depth_rotation = self.unpack_vector(msg)
         self.update_movements()
 
     def goal_callback(self, msg):
-        self.get_logger().info(f"Goal callback triggered")
+        # self.get_logger().info(f"Goal callback triggered")
         self.goal_translation, self.goal_rotation = self.unpack_vector(msg)
-        self.get_logger().info(f"READ Translation: {self.goal_translation} Rotation: {self.goal_rotation}")
+        # self.get_logger().info(f"READ Translation: {self.goal_translation} Rotation: {self.goal_rotation}")
         self.update_movements()
 
     def unpack_vector(self, vector):
@@ -70,7 +70,7 @@ class MovementControllerNode(Node):
     def update_movements(self):
         self.translation = np.add(self.depth_translation, self.goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor
         self.rotation = np.add(self.depth_rotation, self.goal_rotation) # assuming goal only has a yaw
-        self.get_logger().info(f"COMPUTED Translation: {self.translation} Rotation: {self.rotation}")
+        # self.get_logger().info(f"COMPUTED Translation: {self.translation} Rotation: {self.rotation}")
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts
         self.thrusterControl.setThrusters(thrustPWMs)

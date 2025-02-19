@@ -14,7 +14,7 @@ from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 from rclpy.executors import MultiThreadedExecutor
 
 class MovementControllerNode(Node):
-    def __init__(self, debug=True):
+    def __init__(self, thruster_allocator_node, debug=True):
         super().__init__('movement_controller_node')
         # package_directory = get_package_share_directory('controls_movement')
         # self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
@@ -44,7 +44,7 @@ class MovementControllerNode(Node):
         self.translation = [0, 0, 0]
         self.rotation = [0, 0, 0]
 
-        self.thrustAllocator = ThrustAllocator()
+        self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()
 
         # FOXGLOVE DEBUGGING

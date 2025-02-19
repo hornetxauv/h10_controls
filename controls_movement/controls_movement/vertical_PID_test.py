@@ -193,15 +193,15 @@ class VerticalPIDNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    thruster_allocator_node = ThrustAllocator()
-    vert_pid_node = VerticalPIDNode(thruster_allocator_node)
+    # thruster_allocator_node = ThrustAllocator()
+    vert_pid_node = VerticalPIDNode()#thruster_allocator_node)
 
     executor = MultiThreadedExecutor()
-    executor.add_node(thruster_allocator_node)
+    # executor.add_node(thruster_allocator_node)
     executor.add_node(vert_pid_node)
     executor.spin()
 
-    thruster_allocator_node.destroy_node()
+    # thruster_allocator_node.destroy_node()
     # test_node.destroy_node()
     rclpy.shutdown()
 

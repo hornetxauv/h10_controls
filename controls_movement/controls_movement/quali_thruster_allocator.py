@@ -87,11 +87,12 @@ class QualiGatePIDNode(Node):
             x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt)
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
-            yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
+            # yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
 
         self.movement_message = Movement()
-        self.movement_message.x = float(x_output)
-        self.movement_message.yaw = float(yaw_output)
+        # self.movement_message.x = float(x_output)
+        # self.movement_message.yaw = float(yaw_output)
+        self.movement_message.yaw = float(x_output)
         self.publish()
 
     def publish(self):

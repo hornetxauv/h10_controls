@@ -7,7 +7,7 @@ vert_pid_node:
     PID_freq_max: 50.0
     PID_freq_step: 0.1
 
-    desired_yaw: 150.0
+    desired_yaw: 100.0
     desired_yaw_min: -180.0
     desired_yaw_max: 180.0
     desired_yaw_step: 1.0
@@ -62,7 +62,7 @@ vert_pid_node:
     pitch_Kd_max: 1.0
     pitch_Kd_step: 0.01
 
-    yaw_Kp: 0.0
+    yaw_Kp: 0.09
     yaw_Kp_min: 0.0
     yaw_Kp_max: 1.0
     yaw_Kp_step: 0.01

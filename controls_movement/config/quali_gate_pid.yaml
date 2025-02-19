@@ -32,6 +32,16 @@ quali_gate_pid_node:
     x_ki_multiplier_max: 5.0
     x_ki_multiplier_step: 1.0
 
+    move_forward_Kp: 0.0
+    move_forward_Kp_min: 0.0
+    move_forward_Kp_max: 100.0
+    move_forward_Kp_step: 0.01
+
+    x_error_threshold: 50.0
+    x_error_threshold_min: 0.0
+    x_error_threshold_max: 1000.0
+    x_error_threshold_step: 1.0
+
     sides_ratio_Kp: 0.0
     sides_ratio_Kp_min: 0.0
     sides_ratio_Kp_max: 500.0
@@ -51,4 +61,3 @@ quali_gate_pid_node:
     sides_ratio_kd_multiplier_min: 0.0
     sides_ratio_kd_multiplier_max: 5.0
     sides_ratio_kd_multiplier_step: 1.0
-

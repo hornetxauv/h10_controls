@@ -79,7 +79,7 @@ class QualiGatePIDNode(Node):
 
         x_output = 0.0
         # z_output = 0.0
-        # y_output = 0.0
+        y_output = 0.0
         yaw_output = 0.0
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
@@ -89,8 +89,12 @@ class QualiGatePIDNode(Node):
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
             # yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
 
+        if abs(self.x_error) < self.get_value("x_error_threshold"):
+            y_output = self.get_value("move_forward_Kp")
+
         self.movement_message = Movement()
         # self.movement_message.x = float(x_output)
+        self.movement_message.y = float(y_output)
         # self.movement_message.yaw = float(yaw_output)
         self.movement_message.yaw = float(x_output)
         self.publish()

@@ -106,6 +106,7 @@ class ThrustAllocator(Node):
     
 
     def getThrusts(self, target_xyz_force, target_rpy):
+        # self.get_logger().info("getThrusts")
         output = self.getOutputMatrix(target_xyz_force, target_rpy)
         min_thrust = self.thrust_map[0][0]
         max_thrust = self.thrust_map[-1][0]
@@ -114,6 +115,7 @@ class ThrustAllocator(Node):
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)
         thrusts = output.x
 
+        # self.get_logger().info("getThrusts ding dong")
         # self.get_logger().info(f"Thruster Allocator: {output.success} status:{output.status}")
 
         if output.status == 3:
@@ -132,6 +134,7 @@ class ThrustAllocator(Node):
 
     
     def thrustToPwm(self, thrust_forces):
+        # self.get_logger().info("thrustToPwm")
         pwm = []
         thruster_biases = np.array([self.get_value('FL')/100,   # Front Left
                     self.get_value('FR')/100,    # Front Right
@@ -144,7 +147,10 @@ class ThrustAllocator(Node):
             force *= bias
             self.get_logger().info(f"bias {bias} force:{force}")
             idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
+            # self.get_logger().info("finish searching")
             pwm.append(self.thrust_map[idx][1].astype(int))
+        
+        # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range
         pwm = [127 if 118 <= x <= 137 else x for x in pwm]
@@ -153,6 +159,7 @@ class ThrustAllocator(Node):
         return pwm
     
     def getThrustPwm(self, target_xyz_force, target_rpy):
+        # self.get_logger().info("getThrustPwm")
         thrust_result = self.getThrusts(target_xyz_force, target_rpy)
         thrust_forces = thrust_result.thrusts
 
@@ -163,7 +170,7 @@ class ThrustAllocator(Node):
             thrust_result.thrusts = self.thrustToPwm(thrust_forces)
 
 
-
+        # self.get_logger().info("i want to die")
         return thrust_result
     
     # Pure translation

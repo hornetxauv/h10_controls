@@ -76,7 +76,7 @@ class MovementControllerNode(Node):
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts
         # self.get_logger().info("before set thrusters")
-        self.thrusterControl.setThrusters(thrustPWMs, self.get_logger())
+        self.thrusterControl.setThrusters(thrustPWMs)#, self.get_logger())
         # self.get_logger().info("after set thrusters")
 
         # if self.debug == True:

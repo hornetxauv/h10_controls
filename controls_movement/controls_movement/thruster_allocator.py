@@ -143,9 +143,10 @@ class ThrustAllocator(Node):
                     self.get_value('ML')/100,    # Middle Left
                     self.get_value('MR')/100,    # Middle Right
                     self.get_value('MM')/100,]) # Middle Middle
+        self.get_logger().info(f"{thruster_biases[0]}")
         for force, bias in zip(thrust_forces, thruster_biases):
             force *= bias
-            self.get_logger().info(f"bias {bias} force:{force}")
+            # self.get_logger().info(f"bias {bias} force:{force}")
             idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
             # self.get_logger().info("finish searching")
             pwm.append(self.thrust_map[idx][1].astype(int))

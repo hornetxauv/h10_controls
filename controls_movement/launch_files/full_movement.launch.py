@@ -30,9 +30,9 @@ def generate_launch_description():
     # change this line to move different direction
     #TODO make it a parameter
     ld = [
-        # Node(package="can_handler", executable="can_handler"),
+        Node(package="can_handler", executable="can_handler"),
         Node(package="controls_movement", executable="movementControls", parameters=[thruster_config_path]),
-        # Node(package="controls_movement", executable="vertPID", parameters=[vert_pid_config_path]),
+        Node(package="controls_movement", executable="vertPID", parameters=[vert_pid_config_path]),
         Node(package="controls_movement", executable="integratedDirTest", parameters=[direction_test_config_path])
     ]
     return LaunchDescription(ld)

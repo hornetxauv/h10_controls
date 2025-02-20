@@ -32,7 +32,7 @@ class DirectionTestNode(Node):
         self.timer = self.create_timer(1.0, self.callback) #replaced with timer because while loop causes threading issues
 
     def callback(self):
-        self.get_logger().info(f"integrated dir test callback")
+        # self.get_logger().info(f"integrated dir test callback")
         # Translation = [0, 0, 0]
         movement_msg = Movement()
         movement_msg.x = float(self.get_value("x")-self.x/2)

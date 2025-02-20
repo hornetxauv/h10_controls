@@ -28,7 +28,6 @@ class QualiGatePIDNode(Node):
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
         self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('quali_gate_pid_node', config_location))
-
         
         #Subscribe to X, Z error data
         self.subscription = self.create_subscription(
@@ -38,6 +37,8 @@ class QualiGatePIDNode(Node):
             10
         )
 
+        self.timer = self.create_timer(0.1, self.timer_callback)
+
         self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
         self.yaw_publisher = self.create_publisher(YawInfo, "/controls/yaw_info", 10)
         
@@ -45,6 +46,7 @@ class QualiGatePIDNode(Node):
         self.x_error = 0.0
         # self.z_error = 0.0
         self.gate_sides_ratio = 1.0
+        self.width = 0.0
 
         self.x_pid = PIDController(Kp=self.get_value('x_Kp'), Ki=self.get_value('x_Ki'), Kd=self.get_value('x_Kd'))
         # self.z_PID = PIDController(Kp=self.get_value('z_Kp'), Ki=self.get_value('z_Ki'), Kd=self.get_value('z_Kd'))
@@ -56,15 +58,16 @@ class QualiGatePIDNode(Node):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
     def detection_callback(self, msg):
-        self.x_pid.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
-        self.sides_ratio_pid.update_consts(new_Kp=self.get_value('sides_ratio_Kp'), new_Ki=self.get_value('sides_ratio_Ki'), new_Kd=self.get_value('sides_ratio_Kd'))
-
         # Taking to the right to be positive dx
         self.x_error = msg.dx 
         # z_error = msg.dy # Note: removed due to using depth sensor
         self.gate_sides_ratio = msg.sides_ratio 
-        width = msg.width
-        self.get_logger().info(f'x_error: {self.x_error}, distance: {width}, gate_sides_ratio: {self.gate_sides_ratio}')
+        self.width = msg.width
+        self.get_logger().info(f'x_error: {self.x_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
+
+    def timer_callback(self):
+        self.x_pid.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
+        self.sides_ratio_pid.update_consts(new_Kp=self.get_value('sides_ratio_Kp'), new_Ki=self.get_value('sides_ratio_Ki'), new_Kd=self.get_value('sides_ratio_Kd'))
 
         # Extract the timestamp from the message header
         current_time = self.get_clock().now().to_msg()
@@ -83,14 +86,14 @@ class QualiGatePIDNode(Node):
         yaw_output = 0.0
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
-        if width != 0:
+        if self.width != 0:
             x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
             # yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
 
-        if abs(self.x_error) < self.get_value("x_error_threshold"):
-            y_output = self.get_value("move_forward_Kp")
+            if abs(self.x_error) < self.get_value("x_error_threshold"):
+                y_output = self.get_value("move_forward_Kp")
 
         self.movement_message = Movement()
         # self.movement_message.x = float(x_output)
@@ -102,7 +105,7 @@ class QualiGatePIDNode(Node):
     def publish(self):
         if self.movement_message is not None:
             self.publisher.publish(self.movement_message)
-            self.get_logger().info(f"Published Movement: ${self.movement_message}")
+            # self.get_logger().info(f"Published Movement: ${self.movement_message}")
 
 def main(args=None):
     rclpy.init(args=args)

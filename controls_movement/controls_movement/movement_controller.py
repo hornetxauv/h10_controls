@@ -16,6 +16,7 @@ from rclpy.executors import MultiThreadedExecutor
 class MovementControllerNode(Node):
     def __init__(self, thruster_allocator_node, debug=True):
         super().__init__('movement_controller_node')
+        self.get_logger().info(f"movement_controller init")
         # package_directory = get_package_share_directory('controls_movement')
         # self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         # config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
@@ -47,15 +48,15 @@ class MovementControllerNode(Node):
         self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()
 
-        self.test_timer = self.create_timer(0.5, self.timer_callback)
+        # self.test_timer = self.create_timer(0.5, self.timer_callback)
 
         # FOXGLOVE DEBUGGING
         self.debug = debug
         self.PWMs_publisher = self.create_publisher(PWMs, "/controls/PWMs", 10)
         self.full_movement_publisher = self.create_publisher(Movement, "/controls/full_movement", 10)
 
-    def timer_callback(self):
-        self.get_logger().info(f"{self.thrustAllocator.get_value('FL')}")
+    # def timer_callback(self):
+    #     self.get_logger().info(f"{self.thrustAllocator.get_value('FL')}")
 
     def depth_callback(self, msg):
         self.get_logger().info(f"Depth callback triggered")

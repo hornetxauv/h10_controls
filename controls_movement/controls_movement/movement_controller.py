@@ -69,17 +69,23 @@ class MovementControllerNode(Node):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
     
     def update_movements(self):
-        # self.get_logger().info("update_movements")
         self.translation = np.add(self.depth_translation, self.goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor
         self.rotation = np.add(self.depth_rotation, self.goal_rotation) # assuming goal only has a yaw
         # self.get_logger().info(f"COMPUTED Translation: {self.translation} Rotation: {self.rotation}")
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts
-        # self.get_logger().info("before set thrusters")
-        self.thrusterControl.setThrusters(thrustPWMs)#, self.get_logger())
-        # self.get_logger().info("after set thrusters")
+        self.publish_thrusters(thrustPWMs, thrustAllocResult)
 
-        # if self.debug == True:
+        movement_msg = Movement()
+        movement_msg.x = float(self.translation[0])
+        movement_msg.y = float(self.translation[1])
+        movement_msg.z = float(self.translation[2])
+        movement_msg.roll = float(self.rotation[0])
+        movement_msg.pitch = float(self.rotation[1])
+        movement_msg.yaw = float(self.rotation[2])
+        self.full_movement_publisher.publish(movement_msg)
+
+    def publish_thrusters(self, thrustPWMs, thrustAllocResult):
         PWMs_msg = PWMs()
         PWMs_msg.math_eqn_solvable = thrustAllocResult.solveSuccess
         PWMs_msg.one = int(thrustPWMs[0])
@@ -90,15 +96,6 @@ class MovementControllerNode(Node):
         PWMs_msg.six = int(thrustPWMs[5])
         PWMs_msg.seven = int(thrustPWMs[6])
         self.PWMs_publisher.publish(PWMs_msg)
-
-        movement_msg = Movement()
-        movement_msg.x = float(self.translation[0])
-        movement_msg.y = float(self.translation[1])
-        movement_msg.z = float(self.translation[2])
-        movement_msg.roll = float(self.rotation[0])
-        movement_msg.pitch = float(self.rotation[1])
-        movement_msg.yaw = float(self.rotation[2])
-        self.full_movement_publisher.publish(movement_msg)
 
 def main(args=None):
     # rclpy.init(args=args)

@@ -51,7 +51,7 @@ class DirectionTestNode(Node):
         # self.get_logger().info(f"{thruster_pwm}")
 
         # self.thrusterController.setThrusters(thrustValues=thruster_pwm)
-        self.get_logger().info(f"{movement_msg}")
+        # self.get_logger().info(f"{movement_msg}")
         self.goal_publisher.publish(movement_msg)
 
     def get_value(self, param_name: str):

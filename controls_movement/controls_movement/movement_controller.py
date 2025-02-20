@@ -12,7 +12,6 @@ import numpy as np
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 from rclpy.executors import MultiThreadedExecutor
-from threading import Thread
 
 class MovementControllerNode(Node):
     def __init__(self, thruster_allocator_node, debug=True):
@@ -77,8 +76,7 @@ class MovementControllerNode(Node):
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts
         # self.get_logger().info("before set thrusters")
-        t = Thread(target=lambda: self.thrusterControl.setThrusters(thrustPWMs, self.get_logger()))
-        t.start()
+        self.thrusterControl.setThrusters(thrustPWMs, self.get_logger())
         # self.get_logger().info("after set thrusters")
 
         # if self.debug == True:

@@ -1,27 +1,42 @@
 from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
-from .pid_controller import PIDController
-from msg_types.msg import Controls
 from msg_types.msg import Movement
 from msg_types.msg import PWMs
-import time
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray, Float32
 import numpy as np
-from ament_index_python.packages import get_package_share_directory
-from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 from rclpy.executors import MultiThreadedExecutor
+
+class WantedMovements:
+    def __init__(self, depth_translation=np.array([0, 0, 0]), depth_rotation=np.array([0, 0, 0]), goal_translation=np.array([0, 0, 0]), goal_rotation=np.array([0, 0, 0])):
+        self.depth_translation = depth_translation
+        self.depth_rotation = depth_rotation
+        self.goal_translation = goal_translation
+        self.goal_rotation = goal_rotation
+
+    def __eq__(self, other):
+        if other == None: return False
+        if type(other) != WantedMovements:
+            raise "Cannot compare WantedMovements with " + type(other)
+        if (self.depth_translation != other.depth_translation).any(): return False
+        if (self.depth_rotation != other.depth_rotation).any(): return False
+        if (self.goal_translation != other.goal_translation).any(): return False
+        if (self.goal_rotation != other.goal_rotation).any(): return False
+        return True
+    
+    def __str__(self):
+        return f"WantedMovements: {self.depth_translation}, {self.depth_rotation}, {self.goal_translation}, {self.goal_rotation}"
+
+    def get_all(self):
+        return (self.depth_translation, self.depth_rotation, self.goal_translation, self.goal_rotation)
+    
+    def copy(self):
+        return WantedMovements(self.depth_translation, self.depth_rotation, self.goal_translation, self.goal_rotation)
 
 class MovementControllerNode(Node):
     def __init__(self, thruster_allocator_node, debug=True):
         super().__init__('movement_controller_node')
         self.get_logger().info(f"movement_controller init")
-        # package_directory = get_package_share_directory('controls_movement')
-        # self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
-        # config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
-        # self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('movement_controller_node', config_location))
-
         
         self.subscription_depth = self.create_subscription(
             Movement,
@@ -37,10 +52,8 @@ class MovementControllerNode(Node):
             10
         )
 
-        self.depth_translation = [0, 0, 0]
-        self.depth_rotation = [0, 0, 0]
-        self.goal_translation = [0, 0, 0]
-        self.goal_rotation = [0, 0, 0]
+        self.prev_wanted_movements = None
+        self.curr_wanted_movements = WantedMovements()
 
         self.translation = [0, 0, 0]
         self.rotation = [0, 0, 0]
@@ -58,19 +71,30 @@ class MovementControllerNode(Node):
     def depth_callback(self, msg):
         # self.get_logger().info(f"Depth callback triggered")
         # self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
-        self.depth_translation, self.depth_rotation = self.unpack_vector(msg)
+        depth_translation, depth_rotation = self.unpack_vector(msg)
+        self.curr_wanted_movements.depth_translation = depth_translation
+        self.curr_wanted_movements.depth_rotation = depth_rotation
 
     def goal_callback(self, msg):
         # self.get_logger().info(f"Goal callback triggered")
         # self.get_logger().info(f"READ Translation: {self.goal_translation} Rotation: {self.goal_rotation}")
-        self.goal_translation, self.goal_rotation = self.unpack_vector(msg)
+        goal_translation, goal_rotation = self.unpack_vector(msg)
+        self.curr_wanted_movements.goal_translation = goal_translation
+        self.curr_wanted_movements.goal_rotation = goal_rotation
 
     def unpack_vector(self, vector):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
     
     def update_movements(self):
-        self.translation = np.add(self.depth_translation, self.goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor
-        self.rotation = np.add(self.depth_rotation, self.goal_rotation) # assuming goal only has a yaw
+        # self.get_logger().info(str(self.prev_wanted_movements))
+        # self.get_logger().info(str(self.curr_wanted_movements))
+        if self.prev_wanted_movements == self.curr_wanted_movements:
+            self.get_logger().info("Avoided unnecessary vector calc")
+            return
+        self.prev_wanted_movements = self.curr_wanted_movements.copy()
+        depth_translation, depth_rotation, goal_translation, goal_rotation = self.curr_wanted_movements.get_all()
+        self.translation = np.add(depth_translation, goal_translation) # assuming depth and goal are independent, and goal does not contain a z factor
+        self.rotation = np.add(depth_rotation, goal_rotation) # assuming goal only has a yaw
         # self.get_logger().info(f"COMPUTED Translation: {self.translation} Rotation: {self.rotation}")
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts

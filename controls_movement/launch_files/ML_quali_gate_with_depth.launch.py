@@ -1,17 +1,7 @@
 #!/usr/bin/env python3
 
-import os
-
-from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    include_launch_description,
-)
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
-from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
@@ -33,12 +23,12 @@ def generate_launch_description():
     # change this line to move different direction
     #TODO make it a parameter
     ld = [
-        # Node(package="can_handler", executable="can_handler"),
+        Node(package="can_handler", executable="can_handler"),
         Node(package="controls_movement", executable="movementControls", parameters=[thruster_config_path]),
         Node(package="controls_movement", executable="vertPID", parameters=[vert_pid_config_path]),
         #Node(package="controls_movement", executable="integratedDirTest", parameters=[direction_test_config_path])
-        Node(package="controls_movement", executable="qualiGate", parameters=[quali_gate_pid_config_path]),
-        Node(package="quali_gate_detector", executable="obj_detector")
+        # Node(package="controls_movement", executable="qualiGate", parameters=[quali_gate_pid_config_path]),
+        # Node(package="quali_gate_detector", executable="obj_detector")
     ]
     return LaunchDescription(ld)
     

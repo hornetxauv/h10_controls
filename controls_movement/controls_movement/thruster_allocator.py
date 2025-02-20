@@ -82,14 +82,6 @@ class ThrustAllocator(Node):
         self.thruster_positions = thruster_positions
         self.thruster_directions = thruster_directions
         
-        # thruster_biases = np.array([self.get_value('FL')/100,   # Front Left
-        #             self.get_value('FR')/100,    # Front Right
-        #             self.get_value('RL')/100,    # Rear Left
-        #             self.get_value('RR')/100,   # Rear Right
-        #             self.get_value('ML')/100,    # Middle Left
-        #             self.get_value('MR')/100,    # Middle Right
-        #             self.get_value('MM')/100,]) # Middle Middle
-
         self.parameters = self.initCoefficientMatrix()
 
 

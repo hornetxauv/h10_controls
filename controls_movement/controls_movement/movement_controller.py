@@ -89,7 +89,7 @@ class MovementControllerNode(Node):
         # self.get_logger().info(str(self.prev_wanted_movements))
         # self.get_logger().info(str(self.curr_wanted_movements))
         if self.prev_wanted_movements == self.curr_wanted_movements:
-            self.get_logger().info("Avoided unnecessary vector calc")
+            # self.get_logger().info("Avoided unnecessary vector calc")
             return
         self.prev_wanted_movements = self.curr_wanted_movements.copy()
         depth_translation, depth_rotation, goal_translation, goal_rotation = self.curr_wanted_movements.get_all()

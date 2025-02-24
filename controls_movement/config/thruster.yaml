@@ -3,12 +3,12 @@ thruster_allocator_node:
     config_location: '/config/thruster.yaml'
     thrust_map_location: '/config/thrust_map.csv' 
 
-    FL: 0.0
+    FL: 100.0
     FL_min: 0.0
     FL_max: 200.0
     FL_step: 1.0
 
-    FR: 0.0
+    FR: 105.0
     FR_min: 0.0
     FR_max: 200.0
     FR_step: 1.0
@@ -38,12 +38,12 @@ thruster_allocator_node:
     MM_max: 200.0
     MM_step: 1.0
 
-    B_FL: 0.0
+    B_FL: 100.0
     B_FL_min: 0.0
     B_FL_max: 200.0
     B_FL_step: 1.0
 
-    B_FR: 0.0
+    B_FR: 108.0
     B_FR_min: 0.0
     B_FR_max: 200.0
     B_FR_step: 1.0
@@ -53,7 +53,7 @@ thruster_allocator_node:
     B_RL_max: 200.0
     B_RL_step: 1.0
 
-    B_RR: 100.0
+    B_RR: 78.0
     B_RR_min: 0.0
     B_RR_max: 200.0
     B_RR_step: 1.0

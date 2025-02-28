@@ -8,17 +8,17 @@ thruster_allocator_node:
     FL_max: 200.0
     FL_step: 1.0
 
-    FR: 105.0
+    FR: 102.0
     FR_min: 0.0
     FR_max: 200.0
     FR_step: 1.0
 
-    RL: 100.0
+    RL: 83.0
     RL_min: 0.0
     RL_max: 200.0
     RL_step: 1.0
 
-    RR: 100.0
+    RR: 85.0
     RR_min: 0.0
     RR_max: 200.0
     RR_step: 1.0
@@ -43,17 +43,17 @@ thruster_allocator_node:
     B_FL_max: 200.0
     B_FL_step: 1.0
 
-    B_FR: 108.0
+    B_FR: 107.0
     B_FR_min: 0.0
     B_FR_max: 200.0
     B_FR_step: 1.0
 
-    B_RL: 100.0
+    B_RL: 125.0
     B_RL_min: 0.0
     B_RL_max: 200.0
     B_RL_step: 1.0
 
-    B_RR: 78.0
+    B_RR: 102.0
     B_RR_min: 0.0
     B_RR_max: 200.0
     B_RR_step: 1.0

@@ -3,7 +3,6 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
-from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   
 from msg_types.msg import Movement
 
@@ -59,8 +58,6 @@ class DirectionTestNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    # thruster_allocator_node = ThrustAllocator()
-    # thruster_controller = ThrusterControl()
     direction_test_node = DirectionTestNode()
 
     executor = MultiThreadedExecutor()

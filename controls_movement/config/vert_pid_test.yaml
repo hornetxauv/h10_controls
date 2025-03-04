@@ -62,7 +62,7 @@ vert_pid_node:
     roll_Kd_max: 1.0
     roll_Kd_step: 0.01
 
-    pitch_Kp: 0.0
+    pitch_Kp: 0.00
     pitch_Kp_min: 0.0
     pitch_Kp_max: 1.0
     pitch_Kp_step: 0.01

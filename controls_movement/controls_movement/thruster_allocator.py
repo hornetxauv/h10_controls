@@ -128,6 +128,9 @@ class ThrustAllocator(Node):
     def thrustToPwm(self, thrust_forces):
         # self.get_logger().info("thrustToPwm")
         pwm = []
+        currents = []
+        forces = []
+        idxs = []
         thruster_biases = np.array([self.get_value('FL')/100,   # Front Left
                     self.get_value('FR')/100,    # Front Right
                     self.get_value('RL')/100,    # Rear Left
@@ -149,14 +152,31 @@ class ThrustAllocator(Node):
             #     self.get_logger().info(f"bias {bias} force:{force}")
             # counter += 1
             force = force * (bias if force < 0 else back_bias)
+            forces.append(force)
             idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
+            idxs.append(idx)
             # self.get_logger().info("finish searching")
             pwm.append(self.thrust_map[idx][1].astype(int))
+            currents.append(self.thrust_map[idx][2].astype(float))
         
         # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
+            if sum(currents) > 29:
+                L = 29.0/sum(currents)
+                H = 1.0
+                new_forces = forces.copy()
+                while ((H-L) > 0.02 or sum(currents)>29):
+                    M = (L+H)/2.0
+                    for i in range(len(forces)):    #scale force values
+                        new_forces[i] = forces[i] * M
+                        idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
+                        pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
+                        currents[i] = self.thrust_map[idxs[i]][2].astype(float)
+                    if (sum(currents) >= 29): H = M
+                    else: L = M
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range
         pwm = [127 if 118 <= x <= 137 else x for x in pwm]
+        self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
         
         
         return pwm
@@ -174,6 +194,7 @@ class ThrustAllocator(Node):
 
 
         # self.get_logger().info("i want to die")
+        # me too bro
         return thrust_result
     
     # Pure translation

@@ -160,19 +160,23 @@ class ThrustAllocator(Node):
             currents.append(self.thrust_map[idx][2].astype(float))
         
         # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
-            if sum(currents) > 29:
-                L = 29.0/sum(currents)
-                H = 1.0
-                new_forces = forces.copy()
-                while ((H-L) > 0.02 or sum(currents)>29):
-                    M = (L+H)/2.0
-                    for i in range(len(forces)):    #scale force values
-                        new_forces[i] = forces[i] * M
-                        idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
-                        pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
-                        currents[i] = self.thrust_map[idxs[i]][2].astype(float)
-                    if (sum(currents) >= 29): H = M
-                    else: L = M
+            # if sum(currents) > 29:
+            #     L = 29.0/sum(currents)
+            #     H = 1.0
+            #     new_forces = forces.copy()
+            #     while ((H-L) > 0.02 or sum(currents)>29):
+            #         M = (L+H)/2.0
+            #         for i in range(len(forces)):    #scale force values
+            #             new_forces[i] = forces[i] * M
+            #             self.get_logger().info("here1")
+            #             idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
+            #             self.get_logger().info("here2")
+            #             pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
+            #             currents[i] = self.thrust_map[idxs[i]][2].astype(float)
+            #         if (sum(currents) >= 29): H = M
+            #         else: L = M
+            #         self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
+        
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range
         pwm = [127 if 118 <= x <= 137 else x for x in pwm]

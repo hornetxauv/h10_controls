@@ -39,7 +39,9 @@ class MovementServiceNode(Node):
             self.get_logger().info(f"Published: {movement_msg}")
             rate.sleep()  # Maintain 10 Hz publishing rate
 
-        self.goal_publisher.publish(Movement(x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0))
+        myFinalMessage = Movement(x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0)
+        self.goal_publisher.publish(myFinalMessage)
+        self.get_logger().info(f"Published: {myFinalMessage}")
 
         self.get_logger().info("Finished publishing movement.")
 

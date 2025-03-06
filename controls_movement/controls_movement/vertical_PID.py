@@ -142,7 +142,7 @@ class VerticalPIDNode(Node):
 
         roll_output, rP_term, rI_term, rD_term = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output, pP_term, pI_term, pD_term = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
-        yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+        yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"), yaw=True)
 
         rotation = [roll_output, pitch_output, yaw_output]
 

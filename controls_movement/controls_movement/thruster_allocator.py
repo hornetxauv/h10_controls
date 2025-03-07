@@ -160,7 +160,7 @@ class ThrustAllocator(Node):
             pwm.append(self.thrust_map[idx][1].astype(int))
             currents.append(self.thrust_map[idx][2].astype(float))
         
-        self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
+        # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
         if sum(currents) > 29:
             L = 29.0/sum(currents)
             H = 1.0

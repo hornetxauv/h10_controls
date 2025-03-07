@@ -61,7 +61,7 @@ class MovementControllerNode(Node):
         self.thrustAllocator = thruster_allocator_node
         self.thrusterControl = ThrusterControl()
 
-        self.update_movements_timer = self.create_timer(0.1, self.update_movements)
+        self.update_movements_timer = self.create_timer(0.02, self.update_movements)
 
         # FOXGLOVE DEBUGGING
         self.debug = debug

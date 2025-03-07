@@ -105,6 +105,7 @@ class ThrustAllocator(Node):
         thrust_bound = (min_thrust, max_thrust)
 
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)
+        # output = optimize.lsq_linear(self.parameters, output)
         thrusts = output.x
 
         # self.get_logger().info("getThrusts ding dong")
@@ -153,7 +154,7 @@ class ThrustAllocator(Node):
             # counter += 1
             force = force * (bias if force < 0 else back_bias)
             forces.append(force)
-            idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
+            idx = min(np.searchsorted(self.thrust_map[:, 0], force, 'left'),len(self.thrust_map[:, 0])-1)
             idxs.append(idx)
             # self.get_logger().info("finish searching")
             pwm.append(self.thrust_map[idx][1].astype(int))
@@ -169,13 +170,13 @@ class ThrustAllocator(Node):
                     for i in range(len(forces)):    #scale force values
                         new_forces[i] = forces[i] * M
                         #self.get_logger().info("here1")
-                        idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
+                        idxs[i] = min(np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left'),len(self.thrust_map[:, 0])-1)
                         #self.get_logger().info("here2")
                         pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
                         currents[i] = self.thrust_map[idxs[i]][2].astype(float)
                     if (sum(currents) >= 29): H = M
                     else: L = M
-                        #self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
+                    #self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
         
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range

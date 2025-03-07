@@ -1,13 +1,23 @@
 class PIDController:
-    def __init__(self, Kp, Ki, Kd):
+    def __init__(self, Kp, Ki, Kd, isOri=False):
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
+        self.isOri = isOri
         self.previous_error = None
         self.integral = 0
 
     def compute(self, setpoint, current_value, dt, kd_multiplier=0, ki_multiplier=0, integral_limit=200.0):
         error = setpoint - current_value
+        intialError = error
+
+        # account for wrap around if we are dealing with orientation PID (roll, pitch , yaw)
+        if self.isOri == True: 
+            error = error % 360
+            if error > 180: error = (error - 360)
+        
+        finalError = error
+
         self.integral = max(-integral_limit, min(integral_limit, (self.integral) + error * dt))
         # self.integral = max(-3/1.1, min(3/1.1, self.integral))
         self.derivative = (error - self.previous_error) / dt if dt > 0 and self.previous_error is not None else 0.0
@@ -16,7 +26,7 @@ class PIDController:
 
         output = self.Kp * error + self.Ki*(10**ki_multiplier) * self.integral + self.Kd*(10**kd_multiplier) * self.derivative
         # return (output, self.Kp * error, self.Kd, derivative, dt)
-        return (output, error, self.integral, self.derivative)
+        return (output, intialError, finalError, self.derivative)
     
     def update_consts(self, new_Kp, new_Ki, new_Kd):
         self.Kp = new_Kp

@@ -32,11 +32,11 @@ class MovementServiceNode(Node):
 
     def publish_continuously(self, movement_msg, duration):
         start_time = self.get_clock().now()
-        rate = self.create_rate(2)  # 10 Hz publishing rate (adjustable)
+        rate = self.create_rate(20)  # 10 Hz publishing rate (adjustable)
 
         while (self.get_clock().now() - start_time) < Duration(seconds=duration):
             self.goal_publisher.publish(movement_msg)
-            self.get_logger().info(f"Published: {movement_msg}")
+            # self.get_logger().info(f"Published: {movement_msg}")
             rate.sleep()  # Maintain 10 Hz publishing rate
 
         myFinalMessage = Movement(x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0)

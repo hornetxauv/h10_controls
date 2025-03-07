@@ -66,7 +66,7 @@ class VerticalPIDNode(Node):
         self.depth_pid = PIDController(Kp=self.get_value('depth_Kp'), Ki=self.get_value('depth_Ki'), Kd=self.get_value('depth_Kd'))
         self.roll_pid = PIDController(Kp=self.get_value('roll_Kp'), Ki=self.get_value('roll_Ki'), Kd=self.get_value('roll_Kd'))
         self.pitch_pid = PIDController(Kp=self.get_value('pitch_Kp'), Ki=self.get_value('pitch_Ki'), Kd=self.get_value('pitch_Kd'))
-        self.yaw_pid = PIDController(Kp=self.get_value('yaw_Kp'), Ki=self.get_value('yaw_Ki'), Kd=self.get_value('yaw_Kd'))
+        self.yaw_pid = PIDController(Kp=self.get_value('yaw_Kp'), Ki=self.get_value('yaw_Ki'), Kd=self.get_value('yaw_Kd'), isOri=True)
 
         ############################################################################
         ############################################################################
@@ -138,11 +138,11 @@ class VerticalPIDNode(Node):
 
 
         depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
-        translation = [0, 0, depth_pid_output]
+        translation = [0, 0, depth_pid_output - 38.00] # 29.75 accounts for steady state error for depth
 
         roll_output, rP_term, rI_term, rD_term = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output, pP_term, pI_term, pD_term = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
-        yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"), yaw=True)
+        yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
 
         rotation = [roll_output, pitch_output, yaw_output]
 

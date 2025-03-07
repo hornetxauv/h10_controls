@@ -105,7 +105,6 @@ class ThrustAllocator(Node):
         thrust_bound = (min_thrust, max_thrust)
 
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)
-        # output = optimize.lsq_linear(self.parameters, output)
         thrusts = output.x
 
         # self.get_logger().info("getThrusts ding dong")
@@ -154,34 +153,34 @@ class ThrustAllocator(Node):
             # counter += 1
             force = force * (bias if force < 0 else back_bias)
             forces.append(force)
-            idx = min(np.searchsorted(self.thrust_map[:, 0], force, 'left'),len(self.thrust_map[:, 0])-1)
+            idx = np.searchsorted(self.thrust_map[:, 0], force, 'left')
+            idx = min(200, idx) # for np.searchsorted, if force exceeds the maximum force then the returned index will be out of range. this line solves that issue...
             idxs.append(idx)
             # self.get_logger().info("finish searching")
             pwm.append(self.thrust_map[idx][1].astype(int))
             currents.append(self.thrust_map[idx][2].astype(float))
         
-        # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
-            if sum(currents) > 29:
-                L = 29.0/sum(currents)
-                H = 1.0
-                new_forces = forces.copy()
-                while ((H-L) > 0.02 or sum(currents)>29):
-                    M = (L+H)/2.0
-                    for i in range(len(forces)):    #scale force values
-                        new_forces[i] = forces[i] * M
-                        #self.get_logger().info("here1")
-                        idxs[i] = min(np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left'),len(self.thrust_map[:, 0])-1)
-                        #self.get_logger().info("here2")
-                        pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
-                        currents[i] = self.thrust_map[idxs[i]][2].astype(float)
-                    if (sum(currents) >= 29): H = M
-                    else: L = M
-                    #self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
+        self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
+        if sum(currents) > 29:
+            L = 29.0/sum(currents)
+            H = 1.0
+            new_forces = forces.copy()
+            while ((H-L) > 0.05 or sum(currents)>30):
+                M = (L+H)/2.0
+                for i in range(len(forces)):    #scale force values
+                    new_forces[i] = forces[i] * M
+                    idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
+                    pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
+                    currents[i] = self.thrust_map[idxs[i]][2].astype(float)
+                if (sum(currents) >= 29): H = M
+                else: L = M
+                self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
         
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range
         pwm = [127 if 118 <= x <= 137 else x for x in pwm]
-        #self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
+        # self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
+        
         
         return pwm
     

@@ -28,19 +28,20 @@ class ThrustAllocResult:
         self.thrusts = thrusts
         self.solveSuccess = status
 
-thruster_positions = np.array(
-    [
-        [-0.17887, 0.22066, 0.0095],       # Front Left
-        [0.176767, 0.222763, 0.0095],      # Front Right
-        [-0.176767, -0.222763, 0.0095],    # Rear Left
-        [0.176767, -0.222763, 0.0095],     # Rear Right
-        [-0.207469, 0.119782, -0.054804],  # Vert Front Left
-        [0.207469, 0.119782, -0.054804],   # Vert Front Right
-        [0, -0.239564, -0.054804],         # Vert Rear Middle
-    ]
-)
+# thruster_positions = np.array(
+#     [
+#         [-0.17887, 0.22066, 0.0095],       # Front Left
+#         [0.176767, 0.222763, 0.0095],      # Front Right
+#         [-0.176767, -0.222763, 0.0095],    # Rear Left
+#         [0.176767, -0.222763, 0.0095],     # Rear Right
+#         [-0.207469, 0.119782, -0.054804],  # Vert Front Left
+#         [0.207469, 0.119782, -0.054804],   # Vert Front Right
+#         [0, -0.239564, -0.054804],         # Vert Rear Middle
+#     ]
+# )
 
 # nathan's values - measured with rulers, 10-03-25 ddmmyy
+# relative to centre of hull. in the z-axis, centre of hull taken to be 15cm off the floor, i.e. 0.15
 thruster_positions = np.array(
     [
         [-0.165, 0.210, 0.049],       # Front Left

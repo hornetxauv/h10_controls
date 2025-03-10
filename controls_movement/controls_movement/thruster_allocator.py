@@ -40,6 +40,19 @@ thruster_positions = np.array(
     ]
 )
 
+# nathan's values - measured with rulers, 10-03-25 ddmmyy
+thruster_positions = np.array(
+    [
+        [-0.165, 0.210, 0.049],       # Front Left
+        [0.165, 0.210, 0.040],      # Front Right
+        [-0.165, -0.210, 0.030],    # Rear Left
+        [0.165, -0.210, 0.0335],     # Rear Right
+        [-0.192, 0.085, -0.016],  # Vert Front Left
+        [0.192, 0.085, -0.012],   # Vert Front Right
+        [0, -0.219, -0.014],         # Vert Rear Middle
+    ]
+)
+
 thruster_directions = np.array(
     [
         [-1, -1, 0],                  # Front Left

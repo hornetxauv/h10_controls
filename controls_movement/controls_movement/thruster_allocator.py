@@ -41,16 +41,17 @@ class ThrustAllocResult:
 # )
 
 # nathan's values - measured with rulers, 10-03-25 ddmmyy
-# relative to centre of hull. in the z-axis, centre of hull taken to be 15cm off the floor, i.e. 0.15
+# x, y (horizontal axes), relative to centre of hull. z, relative to ground.
+# will subtract COG position from this to find the position relative to COG
 thruster_positions = np.array(
     [
-        [-0.165, 0.210, 0.049],       # Front Left
-        [0.165, 0.210, 0.040],      # Front Right
-        [-0.165, -0.210, 0.030],    # Rear Left
-        [0.165, -0.210, 0.0335],     # Rear Right
-        [-0.192, 0.085, -0.016],  # Vert Front Left
-        [0.192, 0.085, -0.012],   # Vert Front Right
-        [0, -0.219, -0.014],         # Vert Rear Middle
+        [-0.165, 0.210, 0.199],       # Front Left
+        [0.165, 0.210, 0.190],      # Front Right
+        [-0.165, -0.210, 0.180],    # Rear Left
+        [0.165, -0.210, 0.1835],     # Rear Right
+        [-0.192, 0.085, -0.166],  # Vert Front Left
+        [0.192, 0.085, -0.162],   # Vert Front Right
+        [0, -0.219, -0.164],         # Vert Rear Middle
     ]
 )
 
@@ -96,32 +97,40 @@ class ThrustAllocator(Node):
         self.thruster_positions = thruster_positions
         self.thruster_directions = thruster_directions
         
-        self.parameters = self.initCoefficientMatrix()
+        # COG x, y, z in metres
+        self.centre_of_mass = np.array([self.get_value('COG_X'), self.get_value('COG_Y'), self.get_value('COG_Z')])
+        self.updateCoefficientMatrix()
 
 
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
-    # Create coefficient matrix
-    def initCoefficientMatrix(self):
-        unit_torque = np.cross(self.thruster_positions, self.thruster_directions).T
+    def calcCoefficientMatrix(self):
+        unit_torque = np.cross(self.thruster_positions - self.centre_of_mass, self.thruster_directions).T
         unit_rpy = np.array([unit_torque[1], unit_torque[0], unit_torque[2]])
         return np.concatenate(
             (self.thruster_directions.T, unit_rpy)
         )
-    
+
+    # Create coefficient matrix
+    def updateCoefficientMatrix(self):
+        self.get_logger().info("Update coefficient matrix")
+        self.parameters = self.calcCoefficientMatrix()
 
     def getThrusts(self, target_xyz_force, target_rpy):
-        # self.get_logger().info("getThrusts")
         output = self.getOutputMatrix(target_xyz_force, target_rpy)
         min_thrust = self.thrust_map[0][0]
         max_thrust = self.thrust_map[-1][0]
         thrust_bound = (min_thrust, max_thrust)
 
+        # use foxglove panel for cog position to update the thruster relative positions
+        latest_cog = np.array([self.get_value('COG_X'), self.get_value('COG_Y'), self.get_value('COG_Z')])
+        if (latest_cog != self.centre_of_mass).any():
+            self.updateCoefficientMatrix()
+
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)
         thrusts = output.x
 
-        # self.get_logger().info("getThrusts ding dong")
         # self.get_logger().info(f"Thruster Allocator: {output.success} status:{output.status}")
 
         if output.status == 3:

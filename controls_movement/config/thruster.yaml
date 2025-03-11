@@ -73,6 +73,21 @@ thruster_allocator_node:
     B_MM_max: 200.0
     B_MM_step: 1.0
 
+    # COG x, y, z in metres
+    COG_Z: 0.15
+    COG_Z_min: -0.5
+    COG_Z_max: 0.5
+    COG_Z_step: 0.001
+
+    COG_X: 0.0
+    COG_X_min: -0.5
+    COG_X_max: 0.5
+    COG_X_step: 0.001
+
+    COG_Y: 0.0
+    COG_Y_min: -0.5
+    COG_Y_max: 0.5
+    COG_Y_step: 0.001
 
     # FL: 100.0
     # FL_min: 0.0

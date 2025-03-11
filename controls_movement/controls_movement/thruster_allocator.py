@@ -98,7 +98,7 @@ class ThrustAllocator(Node):
         self.thruster_directions = thruster_directions
         
         # COG x, y, z in metres
-        self.centre_of_mass = np.array([self.get_value('COG_X'), self.get_value('COG_Y'), self.get_value('COG_Z')])
+        self.centre_of_gravity = np.array([self.get_value('COG_X'), self.get_value('COG_Y'), self.get_value('COG_Z')])
         self.updateCoefficientMatrix()
 
 
@@ -106,7 +106,7 @@ class ThrustAllocator(Node):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
     def calcCoefficientMatrix(self):
-        unit_torque = np.cross(self.thruster_positions - self.centre_of_mass, self.thruster_directions).T
+        unit_torque = np.cross(self.thruster_positions - self.centre_of_gravity, self.thruster_directions).T
         unit_rpy = np.array([unit_torque[1], unit_torque[0], unit_torque[2]])
         return np.concatenate(
             (self.thruster_directions.T, unit_rpy)
@@ -125,7 +125,8 @@ class ThrustAllocator(Node):
 
         # use foxglove panel for cog position to update the thruster relative positions
         latest_cog = np.array([self.get_value('COG_X'), self.get_value('COG_Y'), self.get_value('COG_Z')])
-        if (latest_cog != self.centre_of_mass).any():
+        if (latest_cog != self.centre_of_gravity).any():
+            self.centre_of_gravity = latest_cog
             self.updateCoefficientMatrix()
 
         output = optimize.lsq_linear(self.parameters, output, thrust_bound)

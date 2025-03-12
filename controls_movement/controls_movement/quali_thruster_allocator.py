@@ -65,7 +65,7 @@ class QualiGatePIDNode(Node):
         # z_error = msg.dy # Note: removed due to using depth sensor
         self.gate_sides_ratio = msg.sides_ratio 
         self.width = msg.width
-        self.get_logger().info(f'x_error: {self.x_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
+        self.get_logger().info(f'x_error: {self.x_error}, theta_error: {self.x_theta_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
 
     def timer_callback(self):
         self.x_pid.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))

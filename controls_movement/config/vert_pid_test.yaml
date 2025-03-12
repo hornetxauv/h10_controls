@@ -42,22 +42,22 @@ vert_pid_node:
     depth_Kd_max: 1.0
     depth_Kd_step: 0.01
 
-    desired_yaw: 100.0
+    desired_yaw: 0.0
     desired_yaw_min: -180.0
     desired_yaw_max: 180.0
     desired_yaw_step: 1.0
 
-    yaw_Kp: 0.07
+    yaw_Kp: 0.1
     yaw_Kp_min: 0.0
     yaw_Kp_max: 1.0
     yaw_Kp_step: 0.01
 
-    yaw_Ki: 0.00
+    yaw_Ki: 0.001
     yaw_Ki_min: 0.0
     yaw_Ki_max: 1.0
     yaw_Ki_step: 0.01
 
-    yaw_Kd: 0.00
+    yaw_Kd: 0.01
     yaw_Kd_min: 0.0
     yaw_Kd_max: 1.0
     yaw_Kd_step: 0.01

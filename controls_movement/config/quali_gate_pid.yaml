@@ -32,7 +32,7 @@ quali_gate_pid_node:
     x_ki_multiplier_max: 5.0
     x_ki_multiplier_step: 1.0
 
-    move_forward_Kp: 0.0
+    move_forward_Kp: 40.0
     move_forward_Kp_min: 0.0
     move_forward_Kp_max: 100.0
     move_forward_Kp_step: 0.01

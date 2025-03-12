@@ -3,22 +3,22 @@ thruster_allocator_node:
     config_location: '/config/thruster.yaml'
     thrust_map_location: '/config/thrust_map.csv' 
 
-    FL: 100.0
+    FL: 105.0
     FL_min: 0.0
     FL_max: 200.0
     FL_step: 1.0
 
-    FR: 100.0
+    FR: 95.0
     FR_min: 0.0
     FR_max: 200.0
     FR_step: 1.0
 
-    RL: 100.0
+    RL: 105.0
     RL_min: 0.0
     RL_max: 200.0
     RL_step: 1.0
 
-    RR: 100.0
+    RR: 95.0
     RR_min: 0.0
     RR_max: 200.0
     RR_step: 1.0
@@ -74,7 +74,7 @@ thruster_allocator_node:
     B_MM_step: 1.0
 
     # COG x, y, z in metres
-    COG_Z: 0.15
+    COG_Z: 0.16
     COG_Z_min: -0.5
     COG_Z_max: 0.5
     COG_Z_step: 0.001
@@ -119,7 +119,7 @@ thruster_allocator_node:
     # MR_max: 200.0
     # MR_step: 1.0
 
-    # MM: 100.0
+      # MM: 100.0
     # MM_min: 0.0
     # MM_max: 200.0
     # MM_step: 1.0

@@ -1,4 +1,5 @@
 import rclpy
+import numpy as np
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from msg_types.msg import Movement
@@ -59,7 +60,8 @@ class QualiGatePIDNode(Node):
 
     def detection_callback(self, msg):
         # Taking to the right to be positive dx
-        self.x_error = msg.dx 
+        self.x_error = msg.dx
+        self.x_theta_error = msg.dx_theta
         # z_error = msg.dy # Note: removed due to using depth sensor
         self.gate_sides_ratio = msg.sides_ratio 
         self.width = msg.width
@@ -87,19 +89,25 @@ class QualiGatePIDNode(Node):
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if self.width != 0:
-            x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
+            # x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
             # yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
 
-            if abs(self.x_error) < self.get_value("x_error_threshold"):
-                y_output = self.get_value("move_forward_Kp")
+            # if abs(self.x_error) < self.get_value("x_error_threshold"):
+                # y_output = self.get_value("move_forward_Kp")
+            
+            # get resolved translation vectors from dx_theta
+            radian = np.deg2rad(self.x_theta_error)
+            move_magnitude = self.get_value("move_forward_Kp")
+            x_output = move_magnitude * np.sin(radian)
+            y_output = move_magnitude * np.cos(radian)
 
         self.movement_message = Movement()
-        # self.movement_message.x = float(x_output)
+        self.movement_message.x = float(x_output)
         self.movement_message.y = float(y_output)
+        # self.movement_message.yaw = float(x_output)
         # self.movement_message.yaw = float(yaw_output)
-        self.movement_message.yaw = float(x_output)
         self.publish()
 
     def publish(self):

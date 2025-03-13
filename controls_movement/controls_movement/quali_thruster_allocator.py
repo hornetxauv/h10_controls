@@ -5,6 +5,7 @@ from rclpy.executors import MultiThreadedExecutor
 from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
 from msg_types.msg import YawInfo
+from msg_types.msg import DepthIMU
 
 from controls_movement.pid_controller import PIDController
 
@@ -37,6 +38,14 @@ class QualiGatePIDNode(Node):
             self.detection_callback,
             10
         )
+        
+        #Subscribe to Depth, RPY Data
+        self.subscription = self.create_subscription(
+            DepthIMU,
+            '/sensors/depth_imu',
+            self.sensors_callback,
+            10
+        )
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
@@ -55,6 +64,14 @@ class QualiGatePIDNode(Node):
         
         self.last_time = None
 
+        self.current_yaw = None
+        self.last_known_gate_bearing = None
+        self.last_yaw_with_gate_detected = None
+        self.last_known_gate_size = None
+        self.last_gate_detected_seconds = None
+        self.has_reached_gate = False
+        self.sustained_movement_countdown = 0
+
     def get_value(self, param_name: str):
         return self.get_parameter(param_name).get_parameter_value().double_value
 
@@ -66,6 +83,10 @@ class QualiGatePIDNode(Node):
         self.gate_sides_ratio = msg.sides_ratio 
         self.width = msg.width
         self.get_logger().info(f'x_error: {self.x_error}, theta_error: {self.x_theta_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
+
+        
+    def sensors_callback(self, msg):
+        self.current_yaw = msg.yaw
 
     def timer_callback(self):
         self.x_pid.update_consts(new_Kp=self.get_value('x_Kp'), new_Ki=self.get_value('x_Ki'), new_Kd=self.get_value('x_Kd'))
@@ -87,6 +108,8 @@ class QualiGatePIDNode(Node):
         y_output = 0.0
         yaw_output = 0.0
 
+        desired_diagonal_movement = None
+
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         if self.width != 0:
             # x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
@@ -96,9 +119,30 @@ class QualiGatePIDNode(Node):
 
             # if abs(self.x_error) < self.get_value("x_error_threshold"):
                 # y_output = self.get_value("move_forward_Kp")
+
+            self.last_known_gate_bearing = self.x_theta_error
+            self.last_yaw_with_gate_detected = self.current_yaw
+            self.last_gate_detected_seconds = current_seconds
             
             # get resolved translation vectors from dx_theta
-            radian = np.deg2rad(self.x_theta_error)
+            desired_diagonal_movement = self.x_theta_error
+            
+        else:
+            # logic flow if no detect gate
+            if self.has_reached_gate:
+                # if moved for 10 seconds after "reaching" gate, go back to original state of not seeing the gate
+                if current_seconds - self.last_gate_detected_seconds > 10:
+                    self.has_reached_gate = False
+                    return
+                # else, translate towards last known gate bearing, offset by difference between current yaw and lsat yaw with gate detected
+                desired_diagonal_movement = self.last_known_gate_bearing - (self.last_yaw_with_gate_detected - self.current_yaw)
+            else:
+                rotate_speed = self.get_value("rotate_speed")
+                # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
+                yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
+        
+        if desired_diagonal_movement:
+            radian = np.deg2rad(desired_diagonal_movement)
             move_magnitude = self.get_value("move_forward_Kp")
             x_output = -move_magnitude * np.sin(radian)
             y_output = move_magnitude * np.cos(radian)
@@ -111,7 +155,7 @@ class QualiGatePIDNode(Node):
         self.movement_message.x = float(x_output)
         self.movement_message.y = float(y_output)
         # self.movement_message.yaw = float(x_output)
-        # self.movement_message.yaw = float(yaw_output)
+        self.movement_message.yaw = float(yaw_output)
         self.publish()
 
     def publish(self):

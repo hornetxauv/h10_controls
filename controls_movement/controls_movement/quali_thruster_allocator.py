@@ -64,11 +64,11 @@ class QualiGatePIDNode(Node):
         
         self.last_time = None
 
-        self.current_yaw = None
-        self.last_known_gate_bearing = None
-        self.last_yaw_with_gate_detected = None
-        self.last_known_gate_size = None
-        self.last_gate_detected_seconds = None
+        self.current_yaw = 0
+        self.last_known_gate_bearing = 0
+        self.last_yaw_with_gate_detected = 0
+        self.last_known_gate_size = 0
+        self.last_gate_detected_seconds = 0
         self.has_reached_gate = False
         self.sustained_movement_countdown = 0
 
@@ -127,19 +127,19 @@ class QualiGatePIDNode(Node):
             # get resolved translation vectors from dx_theta
             desired_diagonal_movement = self.x_theta_error
             
-        else:
-            # logic flow if no detect gate
-            if self.has_reached_gate:
-                # if moved for 10 seconds after "reaching" gate, go back to original state of not seeing the gate
-                if current_seconds - self.last_gate_detected_seconds > 10:
-                    self.has_reached_gate = False
-                    return
-                # else, translate towards last known gate bearing, offset by difference between current yaw and lsat yaw with gate detected
-                desired_diagonal_movement = self.last_known_gate_bearing - (self.last_yaw_with_gate_detected - self.current_yaw)
-            else:
-                rotate_speed = self.get_value("rotate_speed")
-                # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
-                yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
+        # else:
+        #     # logic flow if no detect gate
+        #     if self.has_reached_gate:
+        #         # if moved for 10 seconds after "reaching" gate, go back to original state of not seeing the gate
+        #         if current_seconds - self.last_gate_detected_seconds > 10:
+        #             self.has_reached_gate = False
+        #             return
+        #         # else, translate towards last known gate bearing, offset by difference between current yaw and lsat yaw with gate detected
+        #         desired_diagonal_movement = self.last_known_gate_bearing - (self.last_yaw_with_gate_detected - self.current_yaw)
+        #     else:
+        #         rotate_speed = self.get_value("rotate_speed")
+        #         # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
+        #         yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
         
         if desired_diagonal_movement:
             radian = np.deg2rad(desired_diagonal_movement)

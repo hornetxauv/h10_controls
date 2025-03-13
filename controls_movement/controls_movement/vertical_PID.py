@@ -35,11 +35,20 @@ class VerticalPIDNode(Node):
             10
         )
 
+        #Subscribe to pool lines yaw
+        self.subscription = self.create_subscription(
+            Float32,
+            '/perc/pool_lines',
+            self.pool_lines_callback,
+            10
+        )
+
         # Latest sensor readings
         self.current_depth = 0.0
         self.current_roll = 0.0
         self.current_pitch = 0.0
         self.current_yaw = 0.0
+        self.current_pool_lines_yaw = 0.0
 
         # Initialise ThrustAllocator and ThrusterControl
         # self.thrustAllocator = thruster_allocator_node
@@ -103,8 +112,6 @@ class VerticalPIDNode(Node):
 
     #     self.stationkeep(dt)
 
-
-
     def drpy_callback(self, msg):
         if self.desired_yaw == None:
             self.desired_yaw = msg.yaw
@@ -125,6 +132,9 @@ class VerticalPIDNode(Node):
 
         self.stationkeep(dt)
 
+    def pool_lines_callback(self, msg):
+        # self.current_yaw = msg.data
+        pass
 
     def stationkeep(self, dt):
         # change back once control panel not needed
@@ -143,7 +153,7 @@ class VerticalPIDNode(Node):
         roll_output, rP_term, rI_term, rD_term = self.roll_pid.compute(setpoint=self.desired_roll, current_value=self.current_roll, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         pitch_output, pP_term, pI_term, pD_term = self.pitch_pid.compute(setpoint=self.desired_pitch, current_value=self.current_pitch, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
         yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
-
+        # self.get_logger().info(f"{yI_term}")
         rotation = [roll_output, pitch_output, yaw_output]
 
         # controls_msg = Controls()

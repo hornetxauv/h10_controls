@@ -2,6 +2,7 @@ from controls_movement.thruster_allocator import ThrustAllocator
 from thrusters.thrusters import ThrusterControl   #all of the lines involving ThrusterControl will not work if you have not properly installed virtual CAN
 from msg_types.msg import Movement
 from msg_types.msg import PWMs
+from std_msgs.msg import Bool
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -52,6 +53,13 @@ class MovementControllerNode(Node):
             10
         )
 
+        self.subscription_start = self.create_subscription(
+            Bool,
+            '/command/start',
+            self.start_callback,
+            10
+        )
+
         self.prev_wanted_movements = None
         self.curr_wanted_movements = WantedMovements()
 
@@ -68,6 +76,8 @@ class MovementControllerNode(Node):
         self.PWMs_publisher = self.create_publisher(PWMs, "/controls/PWMs", 10)
         self.full_movement_publisher = self.create_publisher(Movement, "/controls/full_movement", 10)
 
+        self.start = False
+
     def depth_callback(self, msg):
         # self.get_logger().info(f"Depth callback triggered")
         # self.get_logger().info(f"READ Translation: {msg.x} Rotation: {msg.z}")
@@ -82,14 +92,22 @@ class MovementControllerNode(Node):
         self.curr_wanted_movements.goal_translation = goal_translation
         self.curr_wanted_movements.goal_rotation = goal_rotation
 
+    def start_callback(self, msg):
+        self.get_logger().info("------------cock and balls------------")
+        if msg:
+            self.start = True
+
     def unpack_vector(self, vector):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
     
     def update_movements(self):
+        # if (not self.start): 
+        #     self.get_logger().info("wont start yet")
+        #     return
         # self.get_logger().info(str(self.prev_wanted_movements))
         # self.get_logger().info(str(self.curr_wanted_movements))
         if self.prev_wanted_movements == self.curr_wanted_movements:
-            self.get_logger().info("------------Skipped unnecessary vector calc------------")
+            # self.get_logger().info("------------Skipped unnecessary vector calc------------")
             return
         self.prev_wanted_movements = self.curr_wanted_movements.copy()
         depth_translation, depth_rotation, goal_translation, goal_rotation = self.curr_wanted_movements.get_all()

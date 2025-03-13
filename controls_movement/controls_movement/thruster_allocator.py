@@ -185,6 +185,8 @@ class ThrustAllocator(Node):
             currents.append(self.thrust_map[idx][2].astype(float))
         
         # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
+        # self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
+
         if sum(currents) > 29:
             L = 29.0/sum(currents)
             H = 1.0
@@ -198,7 +200,7 @@ class ThrustAllocator(Node):
                     currents[i] = self.thrust_map[idxs[i]][2].astype(float)
                 if (sum(currents) >= 29): H = M
                 else: L = M
-                self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
+                # self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
         
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range

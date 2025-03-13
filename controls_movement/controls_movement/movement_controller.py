@@ -93,17 +93,15 @@ class MovementControllerNode(Node):
         self.curr_wanted_movements.goal_rotation = goal_rotation
 
     def start_callback(self, msg):
-        self.get_logger().info("------------cock and balls------------")
-        if msg:
-            self.start = True
+        self.get_logger().info(f"------------Start: {msg.data}------------")
+        self.start = msg.data
 
     def unpack_vector(self, vector):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
     
     def update_movements(self):
-        # if (not self.start): 
-        #     self.get_logger().info("wont start yet")
-        #     return
+        if (not self.start):
+            return
         # self.get_logger().info(str(self.prev_wanted_movements))
         # self.get_logger().info(str(self.curr_wanted_movements))
         if self.prev_wanted_movements == self.curr_wanted_movements:

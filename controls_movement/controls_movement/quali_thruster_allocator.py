@@ -100,8 +100,12 @@ class QualiGatePIDNode(Node):
             # get resolved translation vectors from dx_theta
             radian = np.deg2rad(self.x_theta_error)
             move_magnitude = self.get_value("move_forward_Kp")
-            x_output = move_magnitude * np.sin(radian)
+            x_output = -move_magnitude * np.sin(radian)
             y_output = move_magnitude * np.cos(radian)
+        
+        else:
+            x_output = 0
+            y_output = 0
 
         self.movement_message = Movement()
         self.movement_message.x = float(x_output)

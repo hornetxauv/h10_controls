@@ -12,6 +12,11 @@ vert_pid_node:
     desired_depth_max: 0.0
     desired_depth_step: 0.1
 
+    z_thrust_offset: 10.0
+    z_thrust_offset_min: -50.0
+    z_thrust_offset_max: 50.0
+    z_thrust_offset_step: 0.1
+
     # depth_Kp: 85.0
     # depth_Kp_min: 0.0
     # depth_Kp_max: 500.0
@@ -27,7 +32,7 @@ vert_pid_node:
     # depth_Kd_max: 1.0
     # depth_Kd_step: 0.01
 
-    depth_Kp: 40.0
+    depth_Kp: 150.0
     depth_Kp_min: 0.0
     depth_Kp_max: 500.0
     depth_Kp_step: 1.0
@@ -37,7 +42,7 @@ vert_pid_node:
     depth_Ki_max: 1.0
     depth_Ki_step: 0.01
 
-    depth_Kd: 7.0
+    depth_Kd: 100.0
     depth_Kd_min: 0.0
     depth_Kd_max: 1.0
     depth_Kd_step: 0.01

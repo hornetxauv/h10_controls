@@ -187,18 +187,18 @@ class ThrustAllocator(Node):
         # self.get_logger().info("lakbsdvkjhabdekcjhabsdkjhabckjhasbdcahbsfkcuhsbdflijbvwsidnchlisunvuciushdi")
         # self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
 
-        if sum(currents) > 29:
-            L = 29.0/sum(currents)
+        if sum(currents) > 59:
+            L = 59.0/sum(currents)
             H = 1.0
             new_forces = forces.copy()
-            while ((H-L) > 0.05 or sum(currents)>30):
+            while ((H-L) > 0.05 or sum(currents)>60):
                 M = (L+H)/2.0
                 for i in range(len(forces)):    #scale force values
                     new_forces[i] = forces[i] * M
                     idxs[i] = np.searchsorted(self.thrust_map[:, 0], new_forces[i], 'left')
                     pwm[i] = self.thrust_map[idxs[i]][1].astype(int)
                     currents[i] = self.thrust_map[idxs[i]][2].astype(float)
-                if (sum(currents) >= 29): H = M
+                if (sum(currents) >= 59): H = M
                 else: L = M
                 # self.get_logger().info(f"{L}, {M}, {H}, {sum(currents)}")
         

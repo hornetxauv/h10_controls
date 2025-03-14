@@ -14,7 +14,6 @@ class MovementServiceNode(Node):
         
         # Create a service
         self.srv = self.create_service(MovementService, 'foxglove_movement_service', self.handle_movement_request)
-        
         # Create a publisher for wanted_movement topic
         self.goal_publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
         
@@ -39,7 +38,7 @@ class MovementServiceNode(Node):
             # self.get_logger().info(f"Published: {movement_msg}")
             rate.sleep()  # Maintain 10 Hz publishing rate
 
-        myFinalMessage = Movement(x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0)
+        myFinalMessage = Movement(x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0) # Resets the bawt to neutral state once the loop is done running
         self.goal_publisher.publish(myFinalMessage)
         self.get_logger().info(f"Published: {myFinalMessage}")
 

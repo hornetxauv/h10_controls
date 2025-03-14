@@ -53,6 +53,7 @@ setup(
             "thrust = controls_movement.thruster_allocator_test:main",
 
             "moveService = controls_movement.move_service:main",
+            "moveServiceQueue = controls_movement.move_service_queue:main",
         ],
     },
 )

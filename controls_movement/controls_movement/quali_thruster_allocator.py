@@ -2,6 +2,7 @@ import rclpy
 import numpy as np
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
+from msg_types.srv import MovementService  # Ensure correct package reference
 from msg_types.msg import Movement
 from custom_msgs.msg import GateDetection
 from msg_types.msg import YawInfo
@@ -11,6 +12,8 @@ from controls_movement.pid_controller import PIDController
 
 from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
+
+from std_srvs.srv import Empty
 
 
 '''
@@ -30,6 +33,7 @@ class QualiGatePIDNode(Node):
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
         config_location = package_directory + self.get_parameter('config_location').get_parameter_value().string_value
         self.declare_parameters(namespace='', parameters=read_pid_yaml_and_generate_parameters('quali_gate_pid_node', config_location))
+        self.foxglove_srv = self.create_service(Empty, 'foxglove_gate_service', self.manual_trigger_gate_start)
         
         #Subscribe to X, Z error data
         self.subscription = self.create_subscription(
@@ -51,7 +55,11 @@ class QualiGatePIDNode(Node):
 
         self.publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
         self.yaw_publisher = self.create_publisher(YawInfo, "/controls/yaw_info", 10)
+
+        self.currently_doing_gate = False
         
+        self.client = self.create_client(MovementService, 'foxglove_movement_service')
+
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
         # self.z_error = 0.0
@@ -84,7 +92,6 @@ class QualiGatePIDNode(Node):
         self.width = msg.width
         self.get_logger().info(f'x_error: {self.x_error}, theta_error: {self.x_theta_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
 
-        
     def sensors_callback(self, msg):
         self.current_yaw = msg.yaw
 
@@ -109,9 +116,13 @@ class QualiGatePIDNode(Node):
         yaw_output = 0.0
 
         desired_diagonal_movement = None
+        crispy_toast_width = 400 # width of gate threshold
+
+        if self.width >= crispy_toast_width:
+            self.start_gate_movement()
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
-        if self.width != 0:
+        elif not self.currently_doing_gate and self.width != 0:
             # x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
             # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
             # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
@@ -141,22 +152,64 @@ class QualiGatePIDNode(Node):
         #         # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
         #         yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
         
-        if desired_diagonal_movement:
-            radian = np.deg2rad(desired_diagonal_movement)
-            move_magnitude = self.get_value("move_forward_Kp")
-            x_output = -move_magnitude * np.sin(radian)
-            y_output = move_magnitude * np.cos(radian)
-        
-        else:
-            x_output = 0
-            y_output = 0
+        if not self.currently_doing_gate:
+            if desired_diagonal_movement:
+                radian = np.deg2rad(desired_diagonal_movement)
+                move_magnitude = self.get_value("move_forward_Kp")
+                x_output = -move_magnitude * np.sin(radian)
+                y_output = move_magnitude * np.cos(radian)
+            else:
+                x_output = 0
+                y_output = 0
 
-        self.movement_message = Movement()
-        self.movement_message.x = float(x_output)
-        self.movement_message.y = float(y_output)
-        # self.movement_message.yaw = float(x_output)
-        self.movement_message.yaw = float(yaw_output)
-        self.publish()
+            self.movement_message = Movement()
+            self.movement_message.x = float(x_output)
+            self.movement_message.y = float(y_output)
+            # self.movement_message.yaw = float(x_output)
+            self.movement_message.yaw = float(yaw_output)
+            self.publish()
+
+    def manual_trigger_gate_start(self, request, response):
+        self.currently_doing_gate = False
+        self.start_gate_movement()
+        # response.success = True
+        return response
+
+    def start_gate_movement(self):
+        if not self.currently_doing_gate:
+            self.get_logger().info("Started doing gate")
+            self.send_request(self.moveStraightMessage())
+            self.send_request(self.turn180Message())
+            self.send_request(self.moveStraightMessage())
+        self.currently_doing_gate = True
+
+    def send_request(self, request):
+        future = self.client.call_async(request)
+        # self.get_logger().info("Requested")
+        # rclpy.spin_until_future_complete(self, future)
+        return future.result()
+
+    def moveStraightMessage(self):
+        move_forward_request = MovementService.Request()
+        move_forward_request.duration = 2.0
+        move_forward_request.movement.x = 0.0
+        move_forward_request.movement.y = 10.0
+        move_forward_request.movement.z = 0.0
+        move_forward_request.movement.roll = 0.0
+        move_forward_request.movement.pitch = 0.0
+        move_forward_request.movement.yaw = 0.0
+        return move_forward_request
+    
+    def turn180Message(self):
+        turn180Message = MovementService.Request()
+        turn180Message.duration = 2.0
+        turn180Message.movement.x = 0.0
+        turn180Message.movement.y = 0.0
+        turn180Message.movement.z = 0.0
+        turn180Message.movement.roll = 0.0
+        turn180Message.movement.pitch = 0.0
+        turn180Message.movement.yaw = 20.0
+        return turn180Message
 
     def publish(self):
         if self.movement_message is not None:

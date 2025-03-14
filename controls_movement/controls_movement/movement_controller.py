@@ -93,15 +93,16 @@ class MovementControllerNode(Node):
         self.curr_wanted_movements.goal_rotation = goal_rotation
 
     def start_callback(self, msg):
-        self.get_logger().info(f"------------Start: {msg.data}------------")
+        # self.get_logger().info(f"------------Start: {msg.data}------------")
         self.start = msg.data
 
     def unpack_vector(self, vector):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
-    
+
     def update_movements(self):
-        # if (not self.start):
-        #     return
+        if (not self.start):
+            return
+        # self.get_logger().info(f"managed to start process")
         # self.get_logger().info(str(self.prev_wanted_movements))
         # self.get_logger().info(str(self.curr_wanted_movements))
         if self.prev_wanted_movements == self.curr_wanted_movements:
@@ -115,7 +116,9 @@ class MovementControllerNode(Node):
         thrustAllocResult = self.thrustAllocator.getThrustPwm(self.translation, self.rotation)
         thrustPWMs = thrustAllocResult.thrusts
         self.publish_thrusters(thrustPWMs, thrustAllocResult)
+        self.set_message()
 
+    def set_message(self):
         movement_msg = Movement()
         movement_msg.x = float(self.translation[0])
         movement_msg.y = float(self.translation[1])

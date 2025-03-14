@@ -204,7 +204,7 @@ class ThrustAllocator(Node):
         
 
         # if pwm is between 118 and 137, default it to 127, since that range is all no spin range
-        pwm = [127 if 118 <= x <= 137 else x for x in pwm]
+        # pwm = [127 if 118 <= x <= 137 else x for x in pwm]
         # self.get_logger().info(f"{pwm[0]},{pwm[1]},{pwm[2]},{pwm[3]},{pwm[4]},{pwm[5]},{pwm[6]}; {forces[0]},{forces[1]},{forces[2]},{forces[3]},{forces[4]},{forces[5]},{forces[6]}")
         
         

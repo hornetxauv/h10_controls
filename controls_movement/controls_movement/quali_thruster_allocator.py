@@ -123,14 +123,6 @@ class QualiGatePIDNode(Node):
 
         # only do PID if there is a gate detected, i.e. distance between gates =/= 0
         elif not self.currently_doing_gate and self.width != 0:
-            # x_output, xP_term, xI_term, xD_term = self.x_pid.compute(setpoint=0.0, current_value=self.x_error, dt = dt, kd_multiplier=self.get_value("x_kd_multiplier"))
-            # z_output = self.z_PID.compute(setpoint=0.0, current_value=z_error, dt = dt)
-            # y_output = 1.0 # always be moving forward, this will need to change once we figure out how to determine if the gate has been passed (?)
-            # yaw_output, yP_term, yI_term, yD_term  = self.sides_ratio_pid.compute(setpoint=1.0, current_value=self.gate_sides_ratio, dt = dt)
-
-            # if abs(self.x_error) < self.get_value("x_error_threshold"):
-                # y_output = self.get_value("move_forward_Kp")
-
             self.last_known_gate_bearing = self.x_theta_error
             self.last_yaw_with_gate_detected = self.current_yaw
             self.last_gate_detected_seconds = current_seconds
@@ -138,19 +130,19 @@ class QualiGatePIDNode(Node):
             # get resolved translation vectors from dx_theta
             desired_diagonal_movement = self.x_theta_error
             
-        # else:
-        #     # logic flow if no detect gate
-        #     if self.has_reached_gate:
-        #         # if moved for 10 seconds after "reaching" gate, go back to original state of not seeing the gate
-        #         if current_seconds - self.last_gate_detected_seconds > 10:
-        #             self.has_reached_gate = False
-        #             return
-        #         # else, translate towards last known gate bearing, offset by difference between current yaw and lsat yaw with gate detected
-        #         desired_diagonal_movement = self.last_known_gate_bearing - (self.last_yaw_with_gate_detected - self.current_yaw)
-        #     else:
-        #         rotate_speed = self.get_value("rotate_speed")
-        #         # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
-        #         yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
+        else:
+            # logic flow if no detect gate
+            if self.has_reached_gate:
+                # if moved for 10 seconds after "reaching" gate, go back to original state of not seeing the gate
+                if current_seconds - self.last_gate_detected_seconds > 7:
+                    self.has_reached_gate = False
+                    return
+                # else, translate towards last known gate bearing, offset by difference between current yaw and lsat yaw with gate detected
+                desired_diagonal_movement = self.last_known_gate_bearing - (self.last_yaw_with_gate_detected - self.current_yaw)
+            else:
+                rotate_speed = self.get_value("rotate_speed")
+                # rotate cockwise until find gate. need to turn off auto yaw pid in vert_pid when in this state
+                yaw_output = rotate_speed if self.last_known_gate_bearing >= 0 else -rotate_speed
         
         if not self.currently_doing_gate:
             if desired_diagonal_movement:
@@ -191,9 +183,9 @@ class QualiGatePIDNode(Node):
 
     def moveStraightMessage(self):
         move_forward_request = MovementService.Request()
-        move_forward_request.duration = 2.0
+        move_forward_request.duration = 7.0
         move_forward_request.movement.x = 0.0
-        move_forward_request.movement.y = 10.0
+        move_forward_request.movement.y = 40.0
         move_forward_request.movement.z = 0.0
         move_forward_request.movement.roll = 0.0
         move_forward_request.movement.pitch = 0.0
@@ -202,7 +194,7 @@ class QualiGatePIDNode(Node):
     
     def turn180Message(self):
         turn180Message = MovementService.Request()
-        turn180Message.duration = 2.0
+        turn180Message.duration = 1.5
         turn180Message.movement.x = 0.0
         turn180Message.movement.y = 0.0
         turn180Message.movement.z = 0.0

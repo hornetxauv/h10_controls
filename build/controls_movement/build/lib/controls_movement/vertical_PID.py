@@ -1,6 +1,6 @@
 from threading import Thread
 from controls_movement.pid_controller import PIDController
-from h10_pooltest_ws.src.h10_controls.controls_movement.controls_movement.yaw_pid_hardcode_node import YawNode, YawPIDNode
+from h10_pooltest_ws.src.h10_controls.controls_movement.controls_movement.yaw_pid_hardcode_node import YawPIDNode
 from msg_types.msg import DepthIMU
 from msg_types.msg import Controls
 from msg_types.msg import Movement
@@ -17,7 +17,7 @@ from ament_index_python.packages import get_package_share_directory
 from controls_movement.param_helper import read_pid_yaml_and_generate_parameters
 
 class VerticalPIDNode(Node):
-    def __init__(self, yaw_node):
+    def __init__(self):
         super().__init__('vert_pid_node')
         package_directory = get_package_share_directory('controls_movement')
         self.declare_parameter('config_location', rclpy.Parameter.Type.STRING)
@@ -55,8 +55,6 @@ class VerticalPIDNode(Node):
         self.current_pitch = 0.0
         self.current_yaw = 0.0
         self.current_pool_lines_yaw = 0.0
-
-        self.yaw_node = yaw_node
 
         # Initialise ThrustAllocator and ThrusterControl
         # self.thrustAllocator = thruster_allocator_node
@@ -106,20 +104,20 @@ class VerticalPIDNode(Node):
     #     self.timer = self.create_timer(self.timer_period, self.stationkeep_callback)
 
 
-    def stationkeep_callback(self):
-        self.change_timer_period(self.get_value('PID_freq'))
+    # def stationkeep_callback(self):
+    #     self.change_timer_period(self.get_value('PID_freq'))
 
-        current_time = self.get_clock().now().to_msg()
-        current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
+    #     current_time = self.get_clock().now().to_msg()
+    #     current_seconds = current_time.sec + current_time.nanosec * 1e-9 #? sending only 60Hz why nanosec change to milli
 
-        if self.last_time is None:
-            self.last_time = current_seconds
-            return #dt is still zero, so do not do PID yet
+    #     if self.last_time is None:
+    #         self.last_time = current_seconds
+    #         return #dt is still zero, so do not do PID yet
         
-        dt = current_seconds - self.last_time
-        self.last_time = current_seconds
+    #     dt = current_seconds - self.last_time
+    #     self.last_time = current_seconds
 
-        self.stationkeep(dt)
+    #     self.stationkeep(dt)
 
     def drpy_callback(self, msg):
         if self.desired_yaw == None:
@@ -142,12 +140,16 @@ class VerticalPIDNode(Node):
 
         if not self.turning180now:
             self.stationkeep(self.dt)
-        else:
-            self.turn180()
 
-    def set_current_yaw(self):
+    def get_current_yaw(self):
         return self.current_yaw
     
+    def disable_stationkeep(self):
+        self.turning180now = True
+
+    def enable_stationkeep(self):
+        self.turning180now = False
+
     def pool_lines_callback(self, msg):
         # self.current_yaw = msg.data
         pass
@@ -174,7 +176,6 @@ class VerticalPIDNode(Node):
             # self.get_logger().info(f"Timer: {self.startCountingYawTimer}")
             self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
             self.desired_depth = (self.get_value('desired_depth'))
-            [self.current_depth, self.current_roll, self.current_pitch, self.current_yaw, self.dt] = yaw_node.get_info()
 
             depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=self.dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
 
@@ -276,8 +277,8 @@ class VerticalPIDNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    yaw_pid_node = YawNode()
-    vert_pid_node = VerticalPIDNode(yaw_pid_node)
+    vert_pid_node = VerticalPIDNode()
+    yaw_pid_node = YawPIDNode(vert_pid_node)
 
     executor = MultiThreadedExecutor()
     executor.add_node(vert_pid_node)

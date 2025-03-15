@@ -1,0 +1,111 @@
+[0.425s] Invoking command in '/root/h10_pooltest_ws/src/h10_controls/controls_movement': PYTHONPATH=/root/h10_pooltest_ws/src/h10_controls/build/controls_movement/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/controls_movement build --build-base /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build install --record /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/install.log --single-version-externally-managed install_data
+[0.542s] running egg_info
+[0.542s] creating ../build/controls_movement/controls_movement.egg-info
+[0.543s] writing ../build/controls_movement/controls_movement.egg-info/PKG-INFO
+[0.543s] writing dependency_links to ../build/controls_movement/controls_movement.egg-info/dependency_links.txt
+[0.543s] writing entry points to ../build/controls_movement/controls_movement.egg-info/entry_points.txt
+[0.543s] writing requirements to ../build/controls_movement/controls_movement.egg-info/requires.txt
+[0.543s] writing top-level names to ../build/controls_movement/controls_movement.egg-info/top_level.txt
+[0.543s] writing manifest file '../build/controls_movement/controls_movement.egg-info/SOURCES.txt'
+[0.544s] reading manifest file '../build/controls_movement/controls_movement.egg-info/SOURCES.txt'
+[0.545s] writing manifest file '../build/controls_movement/controls_movement.egg-info/SOURCES.txt'
+[0.546s] running build
+[0.546s] running build_py
+[0.546s] creating /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build
+[0.546s] creating /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib
+[0.546s] creating /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/depth_orientation_pid.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/thruster_allocator.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/move_service_queue.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/integrated_direction_test.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/movement_controller.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/sensor_viewer.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.547s] copying controls_movement/pid_controller.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/move_service.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/yaw_pid_hardcode_node.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/vertical_PID.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/uturn_test.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/__init__.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/param_helper.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.548s] copying controls_movement/quali_thruster_allocator.py -> /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement
+[0.549s] running install
+[0.549s] running install_lib
+[0.549s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.549s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/depth_orientation_pid.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.550s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/thruster_allocator.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.550s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/move_service_queue.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.550s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/integrated_direction_test.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.550s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/movement_controller.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.550s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/sensor_viewer.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/pid_controller.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/move_service.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/yaw_pid_hardcode_node.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/vertical_PID.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/uturn_test.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/__init__.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/param_helper.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] copying /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build/lib/controls_movement/quali_thruster_allocator.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement
+[0.551s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/depth_orientation_pid.py to depth_orientation_pid.cpython-310.pyc
+[0.552s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/thruster_allocator.py to thruster_allocator.cpython-310.pyc
+[0.553s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/move_service_queue.py to move_service_queue.cpython-310.pyc
+[0.553s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/integrated_direction_test.py to integrated_direction_test.cpython-310.pyc
+[0.554s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/movement_controller.py to movement_controller.cpython-310.pyc
+[0.554s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/sensor_viewer.py to sensor_viewer.cpython-310.pyc
+[0.556s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/pid_controller.py to pid_controller.cpython-310.pyc
+[0.556s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/move_service.py to move_service.cpython-310.pyc
+[0.556s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/yaw_pid_hardcode_node.py to yaw_pid_hardcode_node.cpython-310.pyc
+[0.557s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/vertical_PID.py to vertical_PID.cpython-310.pyc
+[0.558s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/uturn_test.py to uturn_test.cpython-310.pyc
+[0.558s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/__init__.py to __init__.cpython-310.pyc
+[0.559s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/param_helper.py to param_helper.cpython-310.pyc
+[0.559s] byte-compiling /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement/quali_thruster_allocator.py to quali_thruster_allocator.cpython-310.pyc
+[0.560s] running install_data
+[0.560s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/ament_index
+[0.560s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/ament_index/resource_index
+[0.560s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/ament_index/resource_index/packages
+[0.560s] copying resource/controls_movement -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/ament_index/resource_index/packages
+[0.561s] copying package.xml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement
+[0.561s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.561s] copying launch_files/vert_pid.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.561s] copying launch_files/CV_quali_gate_with_depth.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.562s] copying launch_files/uturn.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.562s] copying launch_files/full_movement.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.562s] copying launch_files/dirTest.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.562s] copying launch_files/ML_quali_gate_with_depth.launch.py -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/launch
+[0.562s] creating /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.562s] copying config/simple_direction_test.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.563s] copying config/depth_orientation_pid.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.563s] copying config/thruster.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.563s] copying config/pid.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.564s] copying config/thrust_map.csv -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.564s] copying config/thrust_map_calcs.ods -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.564s] copying config/quali_gate_pid.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.564s] copying config/vert_pid_test.yaml -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.564s] copying config/thrust_map_old.csv -> /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/share/controls_movement/config
+[0.565s] running install_egg_info
+[0.568s] Copying ../build/controls_movement/controls_movement.egg-info to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages/controls_movement-0.0.0-py3.10.egg-info
+[0.568s] running install_scripts
+[0.582s] Installing depthOriPID script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.582s] Installing dirTest script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.583s] Installing full_movement script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.583s] Installing integratedDirTest script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.583s] Installing moveBack script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.583s] Installing moveDown script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.584s] Installing moveFront script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.584s] Installing moveLeft script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.584s] Installing moveRight script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.584s] Installing moveService script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.584s] Installing moveServiceQueue script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing moveUp script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing movementControls script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing qualiGate script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing qualiGate_pub script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing sensorViewer script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing sim_control_panel script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing thrust script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing uturn script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing vertPID script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing vertPIDTest script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] Installing vertPID_pub script to /root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/controls_movement
+[0.585s] writing list of installed files to '/root/h10_pooltest_ws/src/h10_controls/build/controls_movement/install.log'
+[0.609s] Invoked command in '/root/h10_pooltest_ws/src/h10_controls/controls_movement' returned '0': PYTHONPATH=/root/h10_pooltest_ws/src/h10_controls/build/controls_movement/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/root/h10_pooltest_ws/src/h10_controls/install/controls_movement/lib/python3.10/site-packages: /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/controls_movement build --build-base /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/build install --record /root/h10_pooltest_ws/src/h10_controls/build/controls_movement/install.log --single-version-externally-managed install_data

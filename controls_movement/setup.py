@@ -35,6 +35,7 @@ setup(
             "vertPID = controls_movement.vertical_PID:main",
             "vertPIDTest = controls_movement.vertical_PID_test:main",
             "vertPID_pub = controls_movement.vertical_PID_sample_pub:main",
+            "yaw_pid = controls_movement.yaw_pid_hardcode_node:main",
 
             "uturn = controls_movement.uturn_test:main",
 

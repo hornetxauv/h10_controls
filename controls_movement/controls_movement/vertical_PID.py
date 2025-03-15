@@ -174,7 +174,7 @@ class VerticalPIDNode(Node):
             # self.get_logger().info(f"Timer: {self.startCountingYawTimer}")
             self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
             self.desired_depth = (self.get_value('desired_depth'))
-            [self.current_depth, self.current_roll, self.current_pitch, self.current_yaw, self.dt] = yaw_node.get_info()
+            [self.current_depth, self.current_roll, self.current_pitch, self.current_yaw, self.dt] = self.yaw_node.get_info()
 
             depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=self.dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
 

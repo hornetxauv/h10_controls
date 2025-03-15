@@ -1,3 +1,4 @@
+from threading import Thread
 import rclpy
 import numpy as np
 from rclpy.node import Node
@@ -58,7 +59,8 @@ class QualiGatePIDNode(Node):
 
         self.currently_doing_gate = False
         
-        self.client = self.create_client(MovementService, 'foxglove_movement_service')
+        self.client = self.create_client(MovementService, 'move_forward')
+        self.client_turn = self.create_client(MovementService, 'turn_180')
 
         # Current errors that will be updated every time ros topic is published to
         self.x_error = 0.0
@@ -90,7 +92,8 @@ class QualiGatePIDNode(Node):
         # z_error = msg.dy # Note: removed due to using depth sensor
         self.gate_sides_ratio = msg.sides_ratio 
         self.width = msg.width
-        self.get_logger().info(f'x_error: {self.x_error}, theta_error: {self.x_theta_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
+        if (self.width > 400):
+            self.get_logger().info(f'x_error: {self.x_error}, theta_error: {self.x_theta_error}, distance: {self.width}, gate_sides_ratio: {self.gate_sides_ratio}')
 
     def sensors_callback(self, msg):
         self.current_yaw = msg.yaw
@@ -171,12 +174,18 @@ class QualiGatePIDNode(Node):
         if not self.currently_doing_gate:
             self.get_logger().info("Started doing gate")
             self.send_request(self.moveStraightMessage())
-            self.send_request(self.turn180Message())
+            self.send_turn_request(self.turn180Message())
             self.send_request(self.moveStraightMessage())
         self.currently_doing_gate = True
 
     def send_request(self, request):
         future = self.client.call_async(request)
+        # self.get_logger().info("Requested")
+        # rclpy.spin_until_future_complete(self, future)
+        return future.result()
+    
+    def send_turn_request(self, request):
+        future = self.client_turn.call_async(request)
         # self.get_logger().info("Requested")
         # rclpy.spin_until_future_complete(self, future)
         return future.result()
@@ -189,7 +198,7 @@ class QualiGatePIDNode(Node):
         move_forward_request.movement.z = 0.0
         move_forward_request.movement.roll = 0.0
         move_forward_request.movement.pitch = 0.0
-        move_forward_request.movement.yaw = 0.0
+        move_forward_request.movement.yaw = 0.0 #TODO add negative yaw
         return move_forward_request
     
     def turn180Message(self):

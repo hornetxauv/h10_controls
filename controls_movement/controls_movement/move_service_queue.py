@@ -15,7 +15,8 @@ class MovementServiceQueueNode(Node):
         # Create a service
         self.srv = self.create_service(MovementService, 'foxglove_movement_service', self.handle_movement_request)
         self.blocking_srv = self.create_service(MovementService, 'move_forward', self.handle_movement_request)
-        self.gate_nonblocking_srv = self.create_service(MovementService, 'turn_180', self.handle_gate_nonblocking_srv)
+        self.gate_turning_srv = self.create_service(MovementService, 'turn_180', self.handle_gate_turning_srv)
+        self.client = self.create_client(MovementService, 'wait_turn_180')
 
         # Create a publisher for wanted_movement topic
         self.goal_publisher = self.create_publisher(Movement, "/controls/wanted_goal_movement", 10)
@@ -25,14 +26,14 @@ class MovementServiceQueueNode(Node):
 
     def handle_movement_request(self, request, response):
         self.get_logger().info(f"Received movement request. Queue length: {len(self.queue)}")
-        self.queue.append(request)
+        self.queue.append(("normal", request))
         self.start_publish()
         response.success = True
         return response
     
-    def handle_gate_nonblocking_srv(self, request, response):
+    def handle_gate_turning_srv(self, request, response):
         self.get_logger().info(f"Received Gate turning request. Queue length: {len(self.queue)}")
-        self.queue.append(request)
+        self.queue.append(("turn", request))
         self.start_publish()
         response.success = True
         return response
@@ -40,11 +41,17 @@ class MovementServiceQueueNode(Node):
     def start_publish(self):
         if self.queue and not self.currently_publishing:
             curr_request = self.queue[0]
-            self.get_logger().info(f"Publishing for {curr_request.duration} seconds...")
-            # Start a separate thread to publish continuously
-            thread = Thread(target=self.publish_continuously, args=(curr_request.movement, curr_request.duration))
-            thread.start()
-            self.queue.pop(0)
+            if curr_request[0] == "normal":
+                self.get_logger().info(f"normal request. Publishing for {curr_request[1].duration} seconds...")
+                # Start a separate thread to publish continuously
+                thread = Thread(target=self.publish_continuously, args=(curr_request[1].movement, curr_request[1].duration))
+                thread.start()
+                self.queue.pop(0)
+            elif curr_request[0] == "turn":
+                self.get_logger().info(f"turn request. Publishing for {curr_request[1].duration} seconds...")
+                future = self.client.call(curr_request[1])
+            else:
+                self.get_logger().info("(Self-defined) ERROR: Unknown request called in move_service_queue.py")
 
     def condition(self):
         pass #TODO for the gate alignment after turning 180

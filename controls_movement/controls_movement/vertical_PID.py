@@ -1,3 +1,4 @@
+from threading import Thread
 from controls_movement.pid_controller import PIDController
 from msg_types.msg import DepthIMU
 from msg_types.msg import Controls
@@ -5,6 +6,7 @@ from msg_types.msg import Movement
 from msg_types.msg import PIDoutputs
 from msg_types.msg import YawInfo
 import time
+from msg_types.srv._movement_service import MovementService
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
@@ -26,6 +28,9 @@ class VerticalPIDNode(Node):
         self.wanted_movement_publisher = self.create_publisher(Movement, "/controls/wanted_pid_movement", 10)
         self.pid_publisher = self.create_publisher(PIDoutputs, "/controls/PIDoutputs", 10)
         self.yaw_publisher = self.create_publisher(YawInfo, "/controls/yaw_info", 10)
+
+        self.gate_srv = self.create_service(MovementService, 'wait_turn_180', self.startTurn180)
+        self.turning180now = False
         
         #Subscribe to Depth, RPY Data
         self.subscription = self.create_subscription(
@@ -56,6 +61,7 @@ class VerticalPIDNode(Node):
 
         # Used for calculating dt from ros messages
         self.last_time = None
+        self.dt = 0.1
 
 
         ############################################################################
@@ -127,14 +133,70 @@ class VerticalPIDNode(Node):
             self.last_time = current_seconds
             return #dt is still zero, so do not do PID yet
         
-        dt = current_seconds - self.last_time
+        self.dt = current_seconds - self.last_time
         self.last_time = current_seconds
 
-        self.stationkeep(dt)
+
+        if not self.turning180now:
+            self.stationkeep(self.dt)
 
     def pool_lines_callback(self, msg):
         # self.current_yaw = msg.data
         pass
+
+    def startTurn180(self, request, response):
+        self.desired_yaw = (self.current_yaw + 360) % 360 - 180
+        self.turning180now = True
+        self.get_logger().info("Starting to yaw 180...")
+        self.turn180()
+#        thread = Thread(target=self.turn180, args=None)
+ #       thread.start()
+        response.success = True
+        return response
+
+
+#    def update_yaw(self):
+#	while True:
+#	    self.current_yaw = self.
+ 
+    def turn180(self):
+        now = time.time()
+        self.startCountingYawTimer = now
+        while (now - self.startCountingYawTimer < 5):
+            # self.get_logger().info(f"Timer: {self.startCountingYawTimer}")
+            self.depth_pid.update_consts(new_Kp=self.get_value('depth_Kp'), new_Ki=self.get_value('depth_Ki'), new_Kd=self.get_value('depth_Kd'))
+            self.desired_depth = (self.get_value('desired_depth'))
+
+            depth_pid_output, dP_term, dI_term, dD_term = self.depth_pid.compute(setpoint=self.desired_depth, current_value=self.current_depth, dt=self.dt, kd_multiplier=self.get_value("depth_kd_multiplier"), ki_multiplier=self.get_value("depth_ki_multiplier"), integral_limit=120.0)
+
+            translation = [0, 0, depth_pid_output-self.get_value("z_thrust_offset")] # 29.75 accounts for steady state error for depth
+            movement_msg = Movement()
+            self.yaw_pid.update_consts(new_Kp=self.get_value('yaw_Kp'), new_Ki=self.get_value('yaw_Ki'), new_Kd=self.get_value('yaw_Kd'))
+            yaw_output, yP_term, yI_term, yD_term  = self.yaw_pid.compute(setpoint=self.desired_yaw, current_value=self.current_yaw, dt = self.dt, kd_multiplier=self.get_value("kd_multiplier"), ki_multiplier=self.get_value("ki_multiplier"))
+            rotation = [0, 0, yaw_output]
+            self.send_values(translation, rotation)
+
+            yaw_msg = YawInfo()
+            yaw_msg.desired_yaw = self.desired_yaw
+            yaw_msg.actual_yaw = self.current_yaw
+            self.yaw_publisher.publish(yaw_msg)
+
+            now = time.time()
+            if (abs(self.desired_yaw - self.current_yaw) > 10):
+                self.get_logger().info(f"Current yaw: {self.current_yaw}")
+                self.startCountingYawTimer = now
+
+
+    def send_values(self, translation, rotation):
+        # for the movement controller node
+        movement_msg = Movement()
+        movement_msg.x = float(translation[0])
+        movement_msg.y = float(translation[1])
+        movement_msg.z = float(translation[2])  
+        movement_msg.roll = float(rotation[0])
+        movement_msg.pitch = float(rotation[1])
+        movement_msg.yaw = float(rotation[2])
+        self.wanted_movement_publisher.publish(movement_msg)
 
     def stationkeep(self, dt):
         # change back once control panel not needed
@@ -161,15 +223,7 @@ class VerticalPIDNode(Node):
         # controls_msg.translation = translation
         # self.wanted_movement_publisher.publish(controls_msg)
 
-        # for the movement controller node
-        movement_msg = Movement()
-        movement_msg.x = float(translation[0])
-        movement_msg.y = float(translation[1])
-        movement_msg.z = float(translation[2])  
-        movement_msg.roll = float(rotation[0])
-        movement_msg.pitch = float(rotation[1])
-        movement_msg.yaw = float(rotation[2])
-        self.wanted_movement_publisher.publish(movement_msg)
+        self.send_values(translation, rotation)
 
         # thrustAllocResult = self.thrustAllocator.getThrustPwm(translation, rotation)
         # thrustPWMs = thrustAllocResult.thrusts

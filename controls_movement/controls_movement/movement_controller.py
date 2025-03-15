@@ -100,8 +100,9 @@ class MovementControllerNode(Node):
         return np.array([vector.x, vector.y, vector.z]), np.array([vector.roll, vector.pitch, -vector.yaw])
 
     def update_movements(self):
-        # if (not self.start):
-        #     return
+        if (not self.start):
+            self.thrusterControl.killThrusters()
+            return
         # self.get_logger().info(f"managed to start process")
         # self.get_logger().info(str(self.prev_wanted_movements))
         # self.get_logger().info(str(self.curr_wanted_movements))
